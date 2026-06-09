@@ -49,20 +49,103 @@ Instead of expensive DOM scraping, AI agents can now interact with web platforms
 
 ---
 
-## 📐 Quick Architecture Overview
+## 🛠️ The Compilation Pipeline in Depth
 
-Shiny Fishstick is organized into three clean layers:
+Shiny Fishstick works by executing a multi-stage compilation pipeline. Here is exactly what happens during each phase:
 
-```mermaid
-graph TD
-    A[Target Website] -->|Crawl & Intercept| B(Shiny Fishstick Core Engine)
-    B -->|DOM & Network Analysis| C{Semantic Intent Classifier}
-    C -->|Classify & Map| D[preflight.yaml Specification]
-    D -->|Compile SDK| E[ShinyFishstickSiteSDK Python/TS]
-    F[Next.js Frontend] -->|Visualize & Trigger| B
+```
+[Target URL] 
+     │
+     ▼
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│  1. Crawler  │ ───> │ 2. DOM Scrape│ ───> │ 3. Intent AI │ ───> │  4. API Sniff│
+└──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘
+                                                                         │
+                                                                         ▼
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│ 8. SDK Write │ <─── │ 7. YAML Gen  │ <─── │  6. FSM Link │ <─── │  5. Session  │
+└──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘
 ```
 
-*For a detailed look at the codebase components, check out [ARCHITECTURE.md](file:///Users/adityadixit/Documents/Code/Preflight%20Designer/architecture.md).*
+### 1. Crawling & URL Clustering
+The Playwright-powered crawler starts at the seed URL and discovers child links. To prevent state explosion on dynamic paths (like `/product/1`, `/product/2`), the crawler clusters paths. It normalizes path templates into a single logical route, e.g., `/product/{id}`.
+
+### 2. Heuristic DOM Selector Scoring
+The analyzer parses the DOM structure of every discovered page. When it finds interactive elements (inputs, select fields, button controls), it scores possible CSS target selectors:
+- **`data-testid`**: Ranks highest (Score: `1.0`) because it is purpose-built for testing stability.
+- **`id`**: Ranks high (Score: `0.9`) if it is unique.
+- **`name`**: Ranks medium (Score: `0.7`) for form input matching.
+- **`class`**: Ranks low (Score: `0.4`) since CSS styling classes often drift.
+- **`XPath / Tag`**: Used as a fallback of last resort (Score: `0.1`).
+
+### 3. Intent Classification
+Using a hybrid AI engine (Gemini API + regex-based local fallback rules), input parameters are clustered together. If a page has an `<input type="email">`, `<input type="password">`, and a submit button, they are combined into a single logical `login` action containing `email` and `password` variables.
+
+### 4. Background API Upgrades
+While the crawler performs actions (such as clicking the `#add-to-cart-btn`), it monitors network traffic. If the button click triggers a background XHR request (`POST /api/cart/add` carrying JSON keys `product_id` and `quantity`), Shiny Fishstick intercepts this network boundary. It maps the UI action directly to the REST API endpoint, bypassing DOM rendering for faster execution.
+
+### 5. Finite State Machine (FSM) Linking
+By analyzing consecutive step transitions, the system compiles logical user journeys into FSM paths. For example, the `purchase_flow` state machine outlines:
+- **State 1**: `/login` (Action: `login` ➔ Transition to `/catalog`)
+- **State 2**: `/catalog` (Action: `search_products` ➔ Transition to `/catalog`)
+- **State 3**: `/product/{id}` (Action: `add_to_cart` ➔ Transition to `/checkout`)
+- **State 4**: `/checkout` (Action: `checkout` ➔ Transition to order confirmation)
+
+---
+
+## 📄 Inside `preflight.yaml`
+
+The output format is a structured YAML navigation descriptor. Here is a commented example of a compiled spec:
+
+```yaml
+version: 1.0.0
+site: http://localhost:8001
+actions:
+  # Browser-based Action
+  login:
+    description: Logs in the user with credentials
+    action_type: browser
+    selector: '#login-form'
+    parameters:
+      - name: email
+        type: string
+        required: true
+        selector: '#email'
+      - name: password
+        type: string
+        required: true
+        selector: '#password'
+
+  # Direct API-upgraded Action
+  add_to_cart:
+    description: Adds the current product to the shopping cart
+    action_type: api
+    selector: '#add-to-cart-btn'
+    parameters:
+      - name: product_id
+        type: string
+        required: true
+        selector: ''
+      - name: quantity
+        type: integer
+        required: true
+        selector: ''
+    api:
+      url: /api/cart/add
+      method: POST
+```
+
+---
+
+## 🖥️ Visual Dashboard Tour
+
+The Next.js frontend provides a comprehensive suite of developer workspace pages:
+1. **Projects Manager**: Create projects and track high-level statistics (discovered actions, api upgrades, and spec validity score).
+2. **Crawl & Log Feed**: Watch real-time logs stream in from the active Playwright web scraper.
+3. **Action Explorer**: Review classified browser and API actions, view generated CSS target anchors, and inspect parameter schemas.
+4. **FSM Visualizer**: Interactive workflow diagrams representing sequential state transitions.
+5. **API Router**: Lists network intercepts and mapping schemas.
+6. **SDK Download Center**: Copy and download compiled Python SDK, TypeScript SDK, or standard YAML specifications.
 
 ---
 
@@ -135,4 +218,4 @@ Visit **[http://localhost:3000](http://localhost:3000)** to view your Shiny Fish
 We welcome contributions to Shiny Fishstick! Please read [CONTRIBUTING.md](file:///Users/adityadixit/Documents/Code/Preflight%20Designer/contributing.md) for details on our code of conduct and submission process.
 
 ## 📄 License
-This project is licensed under the MIT License.
+This project is licensed under the Shiny Fishstick Proprietary Developer License. See [LICENSE](file:///Users/adityadixit/Documents/Code/Preflight%20Designer/LICENSE) for full details.

@@ -1,0 +1,22 @@
+# Shiny Fishstick Proprietary Developer License
+
+**Copyright (c) 2026 Aditya Dixit / Hootsworth. All rights reserved.**
+
+---
+
+### 1. Preamble and Purpose
+Shiny Fishstick is currently an active, private, self-developed research project. The codebase is under active implementation and is not yet ready for public consumption, open-source distribution, or commercial adoption. 
+
+The author intends to license this software under an open-source framework (such as the MIT License) once the initial implementation phase is completed. Until such time, this software is released under the restricted terms set forth below.
+
+### 2. Grant of License and Restrictions
+Until this software is officially re-licensed under an open-source license by the copyright owner, you are granted absolutely no rights to use, copy, modify, merge, publish, distribute, sublicense, or sell copies of this software, except as explicitly permitted:
+- **No Redistribution**: You may not distribute, host, or share this codebase or any portion of its files on any public network, repository, package index, or platform (excluding official repository forks explicitly approved by the owner).
+- **No Commercial Use**: You may not use this software, its generated specifications, or its compiled SDK libraries for any commercial purposes or deployment in production environments.
+- **No Modification**: You may not create derivative works based upon the software.
+
+### 3. Future Open-Source Intention
+The copyright holder intends to transition this repository to the MIT License once the core implementation milestones have been reached. However, this transition is at the sole discretion of the copyright owner, and until an official update is committed to this repository modifying this license, these proprietary terms remain fully in effect.
+
+### 4. Warranty Disclaimer
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
