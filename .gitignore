@@ -1,0 +1,20 @@
+# Python
+venv/
+*.pyc
+__pycache__/
+instance/
+.pytest_cache/
+.env
+
+# Database
+*.db
+*.db-journal
+
+# Node / NextJS
+node_modules/
+.next/
+out/
+build/
+
+# OS
+.DS_Store

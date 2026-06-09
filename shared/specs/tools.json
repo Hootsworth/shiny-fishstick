@@ -1,0 +1,81 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "login",
+      "description": "Logs in the user with credentials",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Value for form field: email"
+          },
+          "password": {
+            "type": "string",
+            "description": "Value for form field: password"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_products",
+      "description": "Searches for products in the store",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "Value for form field: q"
+          }
+        },
+        "required": [
+          "q"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "checkout",
+      "description": "Proceeds to place the order and checkout",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_to_cart",
+      "description": "Adds the current product to the shopping cart",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "description": "Value for form field: product_id"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Value for form field: quantity"
+          }
+        },
+        "required": [
+          "product_id",
+          "quantity"
+        ]
+      }
+    }
+  }
+]

@@ -1,0 +1,46 @@
+version: 1.0.0
+site: http://localhost:8001
+actions:
+  login:
+    description: Logs in the user with credentials
+    action_type: browser
+    selector: '#login-form'
+    parameters:
+    - name: email
+      type: string
+      required: true
+      selector: '#email'
+    - name: password
+      type: string
+      required: true
+      selector: '#password'
+  search_products:
+    description: Searches for products in the store
+    action_type: browser
+    selector: '#search-form'
+    parameters:
+    - name: q
+      type: string
+      required: true
+      selector: '#search-input'
+  checkout:
+    description: Proceeds to place the order and checkout
+    action_type: browser
+    selector: '#checkout-submit-btn'
+    parameters: []
+  add_to_cart:
+    description: Adds the current product to the shopping cart
+    action_type: api
+    selector: '#add-to-cart-btn'
+    parameters:
+    - name: product_id
+      type: string
+      required: true
+      selector: ''
+    - name: quantity
+      type: integer
+      required: true
+      selector: ''
+    api:
+      url: /api/cart/add
+      method: POST

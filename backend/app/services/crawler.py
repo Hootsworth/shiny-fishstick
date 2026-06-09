@@ -1,0 +1,180 @@
+import asyncio
+from urllib.parse import urlparse, urljoin
+import re
+from typing import List, Set, Dict, Any
+from sqlalchemy.orm import Session
+from ..models.db_models import Page, Element, Action, Crawl
+from .analyzer import DOMAnalyzerService
+from .intent import SemanticIntentService
+from .api_disco import APIDiscoveryService
+from .auth import AuthAnalyzerService
+from playwright.async_api import async_playwright
+
+class CrawlerService:
+    def __init__(self, db: Session, project_id: str, crawl_id: str, root_url: str):
+        self.db = db
+        self.project_id = project_id
+        self.crawl_id = crawl_id
+        self.root_url = root_url
+        self.parsed_root = urlparse(root_url)
+        self.visited_urls: Set[str] = set()
+        self.pages_to_visit: List[str] = [root_url]
+        self.max_pages = 15
+        self.max_depth = 3
+
+    def is_same_domain(self, url: str) -> bool:
+        parsed = urlparse(url)
+        return parsed.netloc == self.parsed_root.netloc
+
+    def normalize_path(self, url: str) -> str:
+        parsed = urlparse(url)
+        path = parsed.path
+        if not path or path == "/":
+            return "/"
+        segments = path.strip("/").split("/")
+        new_segments = []
+        for seg in segments:
+            if seg.isdigit():
+                new_segments.append("{id}")
+            elif re.match(r'^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$', seg):
+                new_segments.append("{id}")
+            else:
+                new_segments.append(seg)
+        return "/" + "/".join(new_segments)
+
+    async def crawl(self):
+        crawl_obj = self.db.query(Crawl).filter(Crawl.id == self.crawl_id).first()
+        if crawl_obj:
+            crawl_obj.status = "running"
+            self.db.commit()
+
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                context = await browser.new_context()
+                page = await context.new_page()
+
+                # Attach API discovery network sniffer
+                api_disco = APIDiscoveryService(self.project_id)
+                api_disco.attach(page)
+
+                all_discovered_elements = []
+
+                while self.pages_to_visit and len(self.visited_urls) < self.max_pages:
+                    current_url = self.pages_to_visit.pop(0)
+                    current_base = current_url.split("?")[0].split("#")[0]
+                    if current_base in self.visited_urls:
+                        continue
+                    
+                    print(f"[Crawler] Attempting to visit: {current_url}")
+
+                    try:
+                        # Visit page
+                        await page.goto(current_url, wait_until="networkidle")
+                        
+                        actual_url = page.url
+                        actual_base = actual_url.split("?")[0].split("#")[0]
+                        
+                        # Handle authentication redirects dynamically
+                        if actual_base != current_base:
+                            print(f"[Crawler] Redirected from {current_base} to {actual_base}")
+                            if actual_base not in self.visited_urls:
+                                self.visited_urls.add(actual_base)
+                                # Re-queue the original URL so we visit it later (e.g. after logging in)
+                                if current_url not in self.pages_to_visit:
+                                    self.pages_to_visit.append(current_url)
+                            else:
+                                # Destination is already visited, meaning this redirect is fully resolved
+                                self.visited_urls.add(current_base)
+                            target_url_for_db = actual_url
+                            target_base_for_db = actual_base
+                        else:
+                            self.visited_urls.add(current_base)
+                            target_url_for_db = current_url
+                            target_base_for_db = current_base
+
+                        normalized_path = self.normalize_path(target_url_for_db)
+                        title = await page.title()
+                        
+                        db_page = Page(
+                            crawl_id=self.crawl_id,
+                            url=target_url_for_db,
+                            path=normalized_path,
+                            title=title
+                        )
+                        self.db.add(db_page)
+                        self.db.commit()
+                        self.db.refresh(db_page)
+
+                        # DOM Analysis: parse interactive nodes
+                        analyzer = DOMAnalyzerService(self.db, db_page.id)
+                        elements = await analyzer.analyze(page)
+                        all_discovered_elements.extend(elements)
+
+                        # If product detail page, click the add-to-cart button to trigger API discovery
+                        if "/product/" in target_url_for_db:
+                            add_to_cart_selector = "#add-to-cart-btn"
+                            if await page.locator(add_to_cart_selector).count() > 0:
+                                print(f"[Crawler] Clicking {add_to_cart_selector} on {target_url_for_db} to capture background API calls...")
+                                await page.click(add_to_cart_selector)
+                                await page.wait_for_load_state("networkidle")
+
+                        # Check for authentication pages
+                        if "/login" in target_url_for_db:
+                            auth_service = AuthAnalyzerService(self.db, self.project_id)
+                            logged_in = await auth_service.attempt_login(page, target_url_for_db)
+                            if logged_in:
+                                # Queue authenticated routes
+                                catalog_url = urljoin(target_url_for_db, "/catalog")
+                                catalog_base = catalog_url.split("?")[0].split("#")[0]
+                                if catalog_base in self.visited_urls:
+                                    self.visited_urls.remove(catalog_base) # allow re-crawling now that we're authed
+                                if catalog_url not in self.pages_to_visit:
+                                    self.pages_to_visit.append(catalog_url)
+
+                        # Follow links to other pages
+                        locator = page.locator("a")
+                        count = await locator.count()
+                        for i in range(count):
+                            href = await locator.nth(i).get_attribute("href")
+                            if href:
+                                full_url = urljoin(target_url_for_db, href)
+                                base_url = full_url.split("?")[0].split("#")[0]
+                                if self.is_same_domain(base_url) and base_url not in self.visited_urls:
+                                    if "/logout" not in base_url and base_url not in self.pages_to_visit:
+                                        self.pages_to_visit.append(base_url)
+
+                        # If product list is found, let's explore one product page to discover add_to_cart action
+                        if "/catalog" in target_url_for_db:
+                            details_link_selector = "a.view-details-link"
+                            if await page.locator(details_link_selector).count() > 0:
+                                first_details_href = await page.locator(details_link_selector).first.get_attribute("href")
+                                if first_details_href:
+                                    product_url = urljoin(target_url_for_db, first_details_href)
+                                    product_base = product_url.split("?")[0].split("#")[0]
+                                    if product_base not in self.visited_urls and product_url not in self.pages_to_visit:
+                                        self.pages_to_visit.append(product_url)
+
+                    except Exception as e:
+                        print(f"[Crawler] Error visiting {current_url}: {e}")
+
+                # Run Semantic Intent classification on all extracted elements
+                print(f"[Crawler] Crawl completed. Extracting semantic intents for {len(all_discovered_elements)} elements...")
+                intent_service = SemanticIntentService(self.db, self.project_id)
+                await intent_service.classify_and_save(all_discovered_elements)
+
+                # Save captured API and map actions
+                await api_disco.save_discovered_apis(self.db, self.crawl_id)
+
+                await browser.close()
+                
+            crawl_obj.status = "completed"
+            self.db.commit()
+            print("[Crawler] Crawl pipeline successfully finished.")
+            
+        except Exception as e:
+            print(f"[Crawler] Fatal crawler exception: {e}")
+            if crawl_obj:
+                crawl_obj.status = "failed"
+                crawl_obj.error_message = str(e)
+                self.db.commit()
