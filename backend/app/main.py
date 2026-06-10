@@ -11,6 +11,7 @@ from backend.app.schemas.pyd_models import ProjectCreate, ProjectResponse, Crawl
 from backend.app.services.crawler import CrawlerService
 from backend.app.services.workflow import WorkflowDiscoveryService
 from backend.app.services.generator import SDKGeneratorService
+from backend.app.services.updater import SpecUpdaterService
 
 # Initialize database schemas
 Base.metadata.create_all(bind=engine)
@@ -144,3 +145,40 @@ def get_sdk(project_id: str, lang: str, db: Session = Depends(get_db)):
         return PlainTextResponse(content=sdks["yaml"])
     else:
         raise HTTPException(status_code=400, detail="Unsupported language. Use 'python', 'typescript' or 'yaml'")
+
+@app.get("/api/projects/{project_id}/deltas")
+def get_project_deltas(
+    project_id: str, 
+    crawl_1: str = None, 
+    crawl_2: str = None, 
+    db: Session = Depends(get_db)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    updater = SpecUpdaterService(db, project_id)
+    
+    c1_id = crawl_1
+    c2_id = crawl_2
+    
+    if not c1_id or not c2_id:
+        crawls = updater.get_latest_completed_crawls(project_id, limit=2)
+        if len(crawls) < 2:
+            return {
+                "project_id": project_id,
+                "message": "Fewer than 2 completed crawls found. Cannot perform comparison.",
+                "deltas": {}
+            }
+        if not c2_id:
+            c2_id = crawls[0].id
+        if not c1_id:
+            c1_id = crawls[1].id
+            
+    deltas = updater.compare_crawls(c1_id, c2_id)
+    return {
+        "project_id": project_id,
+        "crawl_1_id": c1_id,
+        "crawl_2_id": c2_id,
+        "deltas": deltas
+    }
