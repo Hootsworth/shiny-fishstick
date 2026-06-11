@@ -3,32 +3,39 @@
 @tailwind utilities;
 
 :root {
-  --background: #070a13;
-  --foreground: #f8fafc;
+  --background: #ffffff;
+  /* Clean white journal paper */
+  --foreground: #000000;
+  /* Stark black ink */
 }
 
 body {
   color: var(--foreground);
-  background: radial-gradient(circle at top, #0f172a, #070a13);
+  background-color: var(--background);
+  /* Optional: faint dot pattern for a journal feel */
+  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 20px 20px;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* Custom scrollbars */
+/* Custom sharp scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0c1222;
+  background: #f3f4f6;
+  border-left: 2px solid #000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
+  background: #000;
+  border: 2px solid #000;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #f472b6;
+  /* pink-400 */
 }

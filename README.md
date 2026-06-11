@@ -46,6 +46,10 @@ Instead of expensive DOM scraping, AI agents can now interact with web platforms
 - 🔌 **XHR Interception & API Upgrades**: Captures background fetches to replace slow browser UI clicks with direct API requests.
 - 📈 **Workflow FSM Discovery**: Automatically discovers sequential dependencies (e.g. `login` -> `search` -> `add_to_cart` -> `checkout`).
 - 🖥️ **Stunning Visual Dashboard**: A beautiful, premium dark-mode Next.js application to monitor crawls, inspect actions, view FSM graphs, and download generated SDKs.
+- 🔑 **Generic Auth & Storage Serialization (Feature A)**: Automatically detects credentials forms using pattern matches and captures complete browser session storage states (`cookies`, `localStorage`, `sessionStorage`) for authenticated runs.
+- 🛡️ **API Authentication Token Propagation (Feature C)**: Sniffs headers during crawling, correlates authentication tokens (e.g., Bearer JWTs) fuzzy-wise with their storage source, and automatically propagates them in direct SDK API calls.
+- 🖥️ **Model Context Protocol (MCP) Server (Feature D)**: Auto-generates a standalone JSON-RPC 2.0 stdio MCP server wrapper directly mapping site actions to callable LLM tools.
+- 🧪 **Automated E2E Test Generator (Feature E)**: Auto-compiles a complete Python integration verification suite (`test_sdk.py`) matching the FSM workflow paths discovered by the engine.
 
 ---
 
@@ -187,6 +191,19 @@ backend/venv/bin/python test_pipeline.py
 ```
 
 Upon success, you will see `🏆 VERIFICATION SUCCESSFUL!` and your generated files will be written to `/shared/specs/`.
+
+#### Running E2E Integration Tests (Feature E)
+Once the compilation is complete and the mock store sandbox is running, you can run the auto-generated E2E integration test suite:
+```bash
+backend/venv/bin/python shared/specs/test_sdk.py
+```
+
+#### Running MCP Server Tests (Feature D)
+To test the generated Model Context Protocol (MCP) server:
+```bash
+backend/venv/bin/python test_mcp_server.py
+```
+This tests the JSON-RPC stdio protocol handshake, tool listings, tool execution, and shutdown functions.
 
 ---
 

@@ -36,7 +36,7 @@ actions:
     - name: product_id
       type: string
       required: true
-      selector: ''
+      selector: '#add-to-cart-btn'
     - name: quantity
       type: integer
       required: true

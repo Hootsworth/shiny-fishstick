@@ -54,6 +54,36 @@ class CrawlerService:
                 context = await browser.new_context()
                 page = await context.new_page()
 
+                # Load saved AuthConfig if exists to restore session
+                from ..models.db_models import AuthConfig
+                auth_cfg = self.db.query(AuthConfig).filter(AuthConfig.project_id == self.project_id).first()
+                if auth_cfg:
+                    try:
+                        details = json.loads(auth_cfg.details)
+                        session_ind = details.get("session_indicators", {})
+                        
+                        # Restore cookies
+                        cookies = session_ind.get("cookies", [])
+                        if cookies:
+                            await context.add_cookies(cookies)
+                            print("[Crawler] Restored cookies from saved session config.")
+                            
+                        # Restore localStorage and sessionStorage
+                        # Storage must be added after navigating to the root domain.
+                        await page.goto(self.root_url)
+                        ls = session_ind.get("localStorage", {})
+                        ss = session_ind.get("sessionStorage", {})
+                        
+                        if ls:
+                            await page.evaluate(f"ls => {{ for (let k in ls) {{ localStorage.setItem(k, ls[k]); }} }}", ls)
+                            print("[Crawler] Restored localStorage context.")
+                        if ss:
+                            await page.evaluate(f"ss => {{ for (let k in ss) {{ sessionStorage.setItem(k, ss[k]); }} }}", ss)
+                            print("[Crawler] Restored sessionStorage context.")
+                            
+                    except Exception as e:
+                        print(f"[Crawler] Error restoring session on startup: {e}")
+
                 # Attach API discovery network sniffer
                 api_disco = APIDiscoveryService(self.project_id)
                 api_disco.attach(page)
@@ -116,13 +146,31 @@ class CrawlerService:
                             add_to_cart_selector = "#add-to-cart-btn"
                             if await page.locator(add_to_cart_selector).count() > 0:
                                 print(f"[Crawler] Clicking {add_to_cart_selector} on {target_url_for_db} to capture background API calls...")
+                                
+                                # Gather context inputs (attributes of the button + URL segments)
+                                parsed_url = urlparse(target_url_for_db)
+                                path_segs = [s for s in parsed_url.path.split("/") if s]
+                                context_inputs = {}
+                                for idx, seg in enumerate(path_segs):
+                                    context_inputs[f"url_seg_{idx}"] = seg
+                                    if seg.isdigit() or len(seg) > 5:
+                                        context_inputs["url_id"] = seg
+                                
+                                try:
+                                    btn_attrs = await page.locator(add_to_cart_selector).evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
+                                    context_inputs.update(btn_attrs)
+                                except Exception:
+                                    pass
+                                
+                                api_disco.start_recording("add_to_cart", context_inputs)
                                 await page.click(add_to_cart_selector)
                                 await page.wait_for_load_state("networkidle")
+                                api_disco.stop_recording()
 
                         # Check for authentication pages
                         if "/login" in target_url_for_db:
                             auth_service = AuthAnalyzerService(self.db, self.project_id)
-                            logged_in = await auth_service.attempt_login(page, target_url_for_db)
+                            logged_in = await auth_service.attempt_login(page, target_url_for_db, api_disco)
                             if logged_in:
                                 # Queue authenticated routes
                                 catalog_url = urljoin(target_url_for_db, "/catalog")

@@ -1,21 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Play, 
-  Check, 
-  Loader2, 
-  Code, 
-  Workflow, 
-  Compass, 
-  Database, 
-  ShieldAlert, 
-  Layers, 
-  RefreshCw, 
-  Download, 
-  Search, 
-  FileText, 
-  CheckCircle, 
+import {
+  Play,
+  Check,
+  Loader2,
+  Code,
+  Workflow,
+  Compass,
+  Database,
+  ShieldAlert,
+  Layers,
+  RefreshCw,
+  Download,
+  Search,
+  FileText,
+  CheckCircle,
   ExternalLink,
   ChevronRight,
   Sparkles,
@@ -36,23 +36,23 @@ const MOCK_CRAWLS = [
 ];
 
 const MOCK_ACTIONS = [
-  { id: "act-1", name: "login", intent: "login", selector: "#login-form", action_type: "browser", confidence_score: 0.95, description: "Logs in the user with credentials", parameters: JSON.stringify([{name: "email", type: "string", selector: "#email"}, {name: "password", type: "string", selector: "#password"}]) },
-  { id: "act-2", name: "search_products", intent: "search", selector: "#search-form", action_type: "browser", confidence_score: 0.95, description: "Searches for products in the store", parameters: JSON.stringify([{name: "q", type: "string", selector: "#search-input"}]) },
-  { id: "act-3", name: "add_to_cart", intent: "add_to_cart", selector: "#add-to-cart-btn", action_type: "api", confidence_score: 0.98, description: "Adds the current product to the shopping cart", api_url: "/api/cart/add", api_method: "POST", parameters: JSON.stringify([{name: "product_id", type: "string", selector: ""}, {name: "quantity", type: "integer", selector: ""}]) },
+  { id: "act-1", name: "login", intent: "login", selector: "#login-form", action_type: "browser", confidence_score: 0.95, description: "Logs in the user with credentials", parameters: JSON.stringify([{ name: "email", type: "string", selector: "#email" }, { name: "password", type: "string", selector: "#password" }]) },
+  { id: "act-2", name: "search_products", intent: "search", selector: "#search-form", action_type: "browser", confidence_score: 0.95, description: "Searches for products in the store", parameters: JSON.stringify([{ name: "q", type: "string", selector: "#search-input" }]) },
+  { id: "act-3", name: "add_to_cart", intent: "add_to_cart", selector: "#add-to-cart-btn", action_type: "api", confidence_score: 0.98, description: "Adds the current product to the shopping cart", api_url: "/api/cart/add", api_method: "POST", parameters: JSON.stringify([{ name: "product_id", type: "string", selector: "" }, { name: "quantity", type: "integer", selector: "" }]) },
   { id: "act-4", name: "checkout", intent: "checkout", selector: "#checkout-submit-btn", action_type: "browser", confidence_score: 0.90, description: "Proceeds to place the order and checkout", parameters: "[]" }
 ];
 
 const MOCK_WORKFLOWS = [
-  { 
-    id: "wf-1", 
-    name: "purchase_flow", 
-    description: "End-to-end purchasing workflow from login to order confirmation", 
+  {
+    id: "wf-1",
+    name: "purchase_flow",
+    description: "End-to-end purchasing workflow from login to order confirmation",
     steps: [
       { action: "login", source_page: "/login", target_page: "/catalog" },
       { action: "search_products", source_page: "/catalog", target_page: "/catalog" },
       { action: "add_to_cart", source_page: "/product/{id}", target_page: "/checkout" },
       { action: "checkout", source_page: "/checkout", target_page: "/catalog" }
-    ] 
+    ]
   }
 ];
 
@@ -177,7 +177,7 @@ class ShinyFishstickSiteSDK:
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('projects');
-  
+
   // Data States
   const [projects, setProjects] = useState<any[]>(MOCK_PROJECTS);
   const [selectedProject, setSelectedProject] = useState<any>(MOCK_PROJECTS[0]);
@@ -186,16 +186,15 @@ export default function Dashboard() {
   const [workflows, setWorkflows] = useState<any[]>(MOCK_WORKFLOWS);
   const [apis, setApis] = useState<any[]>(MOCK_APIS);
   const [specs, setSpecs] = useState<any>(MOCK_SPECS);
-  
+
   // Loading & Form States
   const [loading, setLoading] = useState(false);
-  const [crawlingStatus, setCrawlingStatus] = useState<string>("idle"); // idle, pending, running, completed
+  const [crawlingStatus, setCrawlingStatus] = useState<string>("idle");
   const [newProjName, setNewProjName] = useState("");
   const [newProjUrl, setNewProjUrl] = useState("");
   const [crawlLogs, setCrawlLogs] = useState<string[]>([]);
   const [isLiveConnection, setIsLiveConnection] = useState(false);
 
-  // Fetch data from FastAPI backend if online
   useEffect(() => {
     async function loadData() {
       try {
@@ -216,10 +215,9 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  // Fetch project-specific details
   useEffect(() => {
     if (!selectedProject || !isLiveConnection) return;
-    
+
     async function loadProjectDetails() {
       try {
         const id = selectedProject.id;
@@ -246,7 +244,6 @@ export default function Dashboard() {
     loadProjectDetails();
   }, [selectedProject, isLiveConnection]);
 
-  // Create Project
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjName || !newProjUrl) return;
@@ -272,7 +269,6 @@ export default function Dashboard() {
         setLoading(false);
       }
     } else {
-      // Mock Creation
       const mockProj = {
         id: `proj-${Date.now()}`,
         name: newProjName,
@@ -286,7 +282,6 @@ export default function Dashboard() {
     }
   };
 
-  // Trigger Crawl
   const triggerCrawl = async () => {
     if (!selectedProject) return;
     setCrawlLogs([]);
@@ -307,14 +302,13 @@ export default function Dashboard() {
         if (res.ok) {
           const data = await res.json();
           const crawlId = data.crawl_id;
-          
-          // Poll status
+
           const interval = setInterval(async () => {
             const statusRes = await fetch(`${API_BASE}/crawls/${crawlId}`);
             if (statusRes.ok) {
               const crawlData = await statusRes.json();
               setCrawlingStatus(crawlData.status);
-              
+
               if (crawlData.status === "running") {
                 setCrawlLogs(prev => [
                   ...prev,
@@ -322,11 +316,10 @@ export default function Dashboard() {
                   `[Crawler] Extracting inputs, forms, and clickable elements...`
                 ]);
               }
-              
+
               if (crawlData.status === "completed" || crawlData.status === "failed") {
                 clearInterval(interval);
-                // Refresh items
-                setIsLiveConnection(prev => !prev); // force reload hook
+                setIsLiveConnection(prev => !prev);
                 setCrawlLogs(prev => [
                   ...prev,
                   `[Crawler] Run finished. Crawl status: ${crawlData.status.toUpperCase()}`,
@@ -343,7 +336,6 @@ export default function Dashboard() {
         console.error(err);
       }
     } else {
-      // Mock crawl simulation
       setTimeout(() => {
         setCrawlingStatus("running");
         setCrawlLogs(prev => [
@@ -368,71 +360,53 @@ export default function Dashboard() {
     }
   };
 
+  // Nav Button Component for DRY styling
+  const NavButton = ({ id, icon: Icon, label, isActive }: any) => {
+    const activeClasses = isActive
+      ? "bg-pink-100 border-2 border-black shadow-[2px_2px_0px_0px_#000] text-black translate-x-1"
+      : "border-2 border-transparent text-gray-600 hover:text-black hover:bg-gray-100 hover:border-gray-300";
+
+    return (
+      <button
+        onClick={() => setActiveTab(id)}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-md font-bold transition-all duration-200 ${activeClasses}`}
+      >
+        <Icon className={`h-4 w-4 ${isActive ? 'text-black' : 'text-gray-500'}`} />
+        {label}
+      </button>
+    );
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar with Premium Glassmorphism */}
-      <aside className="w-64 bg-slate-950/60 border-r border-slate-800/80 backdrop-blur-lg flex flex-col justify-between shrink-0">
+    <div className="flex h-screen overflow-hidden bg-transparent">
+
+      {/* Sidebar: Stark white, thick borders */}
+      <aside className="w-72 bg-white border-r-2 border-black flex flex-col justify-between shrink-0 z-10 shadow-[4px_0_10px_rgba(0,0,0,0.02)]">
         <div>
-          <div className="p-6 border-b border-slate-800/80">
-            <h1 className="text-xl font-bold flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400">
-              <Compass className="h-6 w-6 text-blue-400 animate-pulse" />
-              Shiny Fishstick
+          <div className="p-6 border-b-2 border-black bg-pink-50">
+            <h1 className="text-xl font-extrabold flex items-center gap-2 text-black tracking-tight">
+              <Compass className="h-6 w-6" />
+              SHINY FISHSTICK
             </h1>
-            <p className="text-xs text-slate-500 mt-1">AI Browser Agent Spec Compiler</p>
+            <p className="text-xs font-semibold text-gray-600 mt-1 uppercase tracking-wider">Agent Spec Compiler</p>
           </div>
-          
-          <nav className="p-4 space-y-1">
-            <button 
-              onClick={() => setActiveTab('projects')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${activeTab === 'projects' ? 'bg-indigo-600/20 border-l-2 border-indigo-500 text-indigo-200' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}
-            >
-              <Layers className="h-4 w-4" />
-              Project Dashboard
-            </button>
-            <button 
-              onClick={() => setActiveTab('crawl')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${activeTab === 'crawl' ? 'bg-indigo-600/20 border-l-2 border-indigo-500 text-indigo-200' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}
-            >
-              <Loader2 className={`h-4 w-4 ${crawlingStatus === 'running' ? 'animate-spin text-blue-400' : ''}`} />
-              Crawl Progress
-            </button>
-            <button 
-              onClick={() => setActiveTab('actions')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${activeTab === 'actions' ? 'bg-indigo-600/20 border-l-2 border-indigo-500 text-indigo-200' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}
-            >
-              <Compass className="h-4 w-4" />
-              Action Explorer
-            </button>
-            <button 
-              onClick={() => setActiveTab('workflow')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${activeTab === 'workflow' ? 'bg-indigo-600/20 border-l-2 border-indigo-500 text-indigo-200' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}
-            >
-              <Workflow className="h-4 w-4" />
-              Workflow Visualizer
-            </button>
-            <button 
-              onClick={() => setActiveTab('api')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${activeTab === 'api' ? 'bg-indigo-600/20 border-l-2 border-indigo-500 text-indigo-200' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}
-            >
-              <Database className="h-4 w-4" />
-              API Explorer
-            </button>
-            <button 
-              onClick={() => setActiveTab('sdk')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${activeTab === 'sdk' ? 'bg-indigo-600/20 border-l-2 border-indigo-500 text-indigo-200' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}
-            >
-              <Code className="h-4 w-4" />
-              SDK Generator
-            </button>
+
+          <nav className="p-4 space-y-2">
+            <NavButton id="projects" icon={Layers} label="Dashboard" isActive={activeTab === 'projects'} />
+            <NavButton id="crawl" icon={Loader2} label="Crawl Progress" isActive={activeTab === 'crawl'} />
+            <NavButton id="actions" icon={Compass} label="Action Explorer" isActive={activeTab === 'actions'} />
+            <NavButton id="workflow" icon={Workflow} label="Workflows" isActive={activeTab === 'workflow'} />
+            <NavButton id="api" icon={Database} label="API Routes" isActive={activeTab === 'api'} />
+            <NavButton id="sdk" icon={Code} label="SDK Generator" isActive={activeTab === 'sdk'} />
           </nav>
         </div>
-        
-        <div className="p-4 border-t border-slate-800/80">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>Status:</span>
-            <span className="flex items-center gap-1.5 font-semibold text-emerald-400">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
-              {isLiveConnection ? "Live API Connected" : "Local Sandbox fallback"}
+
+        <div className="p-5 border-t-2 border-black bg-white">
+          <div className="flex items-center justify-between text-xs font-bold text-gray-500 uppercase">
+            <span>Status</span>
+            <span className="flex items-center gap-1.5 text-black">
+              <span className={`h-2.5 w-2.5 rounded-none border border-black ${isLiveConnection ? 'bg-green-400' : 'bg-pink-400'}`}></span>
+              {isLiveConnection ? "Live Connected" : "Local Sandbox"}
             </span>
           </div>
         </div>
@@ -440,90 +414,86 @@ export default function Dashboard() {
 
       {/* Main Panel */}
       <main className="flex-grow flex flex-col overflow-y-auto">
-        <header className="h-16 border-b border-slate-800/60 bg-slate-950/20 backdrop-blur-md flex items-center justify-between px-8 shrink-0">
+        <header className="h-20 border-b-2 border-black bg-white flex items-center justify-between px-8 shrink-0 z-10">
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-400">Current Project:</span>
-            <select 
-              value={selectedProject?.id || ''} 
+            <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Project</span>
+            <select
+              value={selectedProject?.id || ''}
               onChange={(e) => setSelectedProject(projects.find(p => p.id === e.target.value))}
-              className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-indigo-500"
+              className="bg-white border-2 border-black rounded-md px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-pink-300 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
             >
               {projects.map(p => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
           </div>
-          
-          <button 
+
+          <button
             onClick={triggerCrawl}
             disabled={crawlingStatus === 'running'}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-sm px-4 py-2 rounded-lg transition duration-200 shadow-md shadow-indigo-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 bg-black text-white font-bold text-sm px-5 py-2.5 rounded-md border-2 border-black shadow-[4px_4px_0px_0px_#f472b6] hover:shadow-[2px_2px_0px_0px_#f472b6] hover:translate-y-[2px] hover:translate-x-[2px] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0 disabled:translate-x-0"
           >
             <Play className="h-4 w-4" />
-            Analyze Website
+            ANALYZE WEBSITE
           </button>
         </header>
 
-        <div className="p-8 max-w-6xl mx-auto w-full flex-grow">
+        <div className="p-10 max-w-6xl mx-auto w-full flex-grow">
           {/* TAB 1: PROJECTS */}
           {activeTab === 'projects' && (
-            <div className="space-y-8">
+            <div className="space-y-10">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
-                  <Layers className="text-blue-400" />
-                  Projects Management
+                <h2 className="text-3xl font-black tracking-tight flex items-center gap-3 text-black">
+                  <Layers className="h-8 w-8" />
+                  PROJECT METRICS
                 </h2>
-                <p className="text-slate-400 text-sm mt-1">Create projects and track high level statistics.</p>
+                <p className="text-gray-600 font-medium mt-2">Overview of compiled agent schemas.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-6 backdrop-blur-md">
-                  <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Discovered Actions</div>
-                  <div className="text-3xl font-extrabold mt-2 text-blue-400">{actions.length}</div>
-                  <p className="text-xs text-slate-500 mt-1">High level semantic capabilities</p>
-                </div>
-                <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-6 backdrop-blur-md">
-                  <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Mapped API Routes</div>
-                  <div className="text-3xl font-extrabold mt-2 text-indigo-400">{apis.length}</div>
-                  <p className="text-xs text-slate-500 mt-1">Optimized endpoints mapping</p>
-                </div>
-                <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-6 backdrop-blur-md">
-                  <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Specification Health</div>
-                  <div className="text-3xl font-extrabold mt-2 text-emerald-400">98%</div>
-                  <p className="text-xs text-slate-500 mt-1">Confidence rating based on selectors</p>
-                </div>
+                {[
+                  { label: 'Discovered Actions', val: actions.length, desc: 'Semantic capabilities' },
+                  { label: 'Mapped APIs', val: apis.length, desc: 'Optimized endpoints' },
+                  { label: 'Spec Health', val: '98%', desc: 'Selector confidence' }
+                ].map((stat, i) => (
+                  <div key={i} className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-6 relative overflow-hidden">
+                    <div className="text-black text-xs font-bold uppercase tracking-widest">{stat.label}</div>
+                    <div className="text-4xl font-black mt-3 text-black">{stat.val}</div>
+                    <p className="text-sm font-semibold text-gray-500 mt-2">{stat.desc}</p>
+                    <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-pink-100 rounded-full z-[-1] border-2 border-black opacity-50"></div>
+                  </div>
+                ))}
               </div>
 
-              {/* Add New Project */}
-              <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-8 max-w-xl">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Plus className="text-indigo-400" />
-                  Add New Website Project
+              <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-8 max-w-xl">
+                <h3 className="text-xl font-black mb-6 flex items-center gap-2">
+                  <Plus className="text-black h-6 w-6" />
+                  ADD NEW TARGET
                 </h3>
-                <form onSubmit={handleCreateProject} className="space-y-4">
+                <form onSubmit={handleCreateProject} className="space-y-5">
                   <div>
-                    <label className="block text-xs text-slate-400 font-semibold mb-1">Project Name</label>
-                    <input 
-                      type="text" 
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Target Name</label>
+                    <input
+                      type="text"
                       value={newProjName}
                       onChange={(e) => setNewProjName(e.target.value)}
                       placeholder="My Store Website"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500 text-sm"
+                      className="w-full bg-gray-50 border-2 border-black rounded-md px-4 py-3 text-black font-medium focus:outline-none focus:bg-white focus:ring-2 focus:ring-pink-300"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 font-semibold mb-1">Root URL</label>
-                    <input 
-                      type="url" 
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Root URL</label>
+                    <input
+                      type="url"
                       value={newProjUrl}
                       onChange={(e) => setNewProjUrl(e.target.value)}
                       placeholder="http://localhost:8001"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500 text-sm"
+                      className="w-full bg-gray-50 border-2 border-black rounded-md px-4 py-3 text-black font-medium focus:outline-none focus:bg-white focus:ring-2 focus:ring-pink-300"
                     />
                   </div>
-                  <button 
+                  <button
                     type="submit"
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200 text-sm"
+                    className="w-full bg-black text-white font-bold py-3 rounded-md border-2 border-black shadow-[4px_4px_0px_0px_#f472b6] hover:shadow-[2px_2px_0px_0px_#f472b6] hover:translate-y-[2px] hover:translate-x-[2px] transition-all uppercase tracking-wider mt-2"
                   >
                     Create Project
                   </button>
@@ -534,47 +504,46 @@ export default function Dashboard() {
 
           {/* TAB 2: CRAWL PROGRESS */}
           {activeTab === 'crawl' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
-                  <Loader2 className={`text-indigo-400 ${crawlingStatus === 'running' ? 'animate-spin' : ''}`} />
-                  Crawl & Elements Discovery
+                <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
+                  <Loader2 className={`${crawlingStatus === 'running' ? 'animate-spin' : ''}`} />
+                  CRAWL TERMINAL
                 </h2>
-                <p className="text-slate-400 text-sm mt-1">Real-time scanner log feed and discovery progress.</p>
+                <p className="text-gray-600 font-medium mt-2">Real-time scanner log feed.</p>
               </div>
 
-              {/* Status Header */}
-              <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-6 flex justify-between items-center">
+              <div className="bg-pink-50 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-6 flex justify-between items-center">
                 <div>
-                  <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Crawl Status</div>
-                  <div className="text-lg font-bold capitalize mt-1 flex items-center gap-2">
-                    {crawlingStatus === 'running' && <span className="h-2 w-2 rounded-full bg-blue-400 animate-ping"></span>}
-                    {crawlingStatus === 'completed' && <CheckCircle className="h-5 w-5 text-emerald-400" />}
-                    {crawlingStatus.toUpperCase()}
+                  <div className="text-xs font-black text-gray-600 uppercase tracking-widest">Job Status</div>
+                  <div className="text-xl font-black uppercase mt-1 flex items-center gap-2">
+                    {crawlingStatus === 'running' && <span className="h-3 w-3 rounded-none bg-black animate-pulse border border-black"></span>}
+                    {crawlingStatus === 'completed' && <CheckCircle className="h-5 w-5 text-black" />}
+                    {crawlingStatus}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Page Grouping</div>
-                  <div className="text-sm font-semibold mt-1">Consolidating path variables to routes...</div>
+                  <div className="text-xs font-black text-gray-600 uppercase tracking-widest">Routing</div>
+                  <div className="text-sm font-bold mt-1">Consolidating paths...</div>
                 </div>
               </div>
 
-              {/* Console log box */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 font-mono text-sm space-y-2 h-96 overflow-y-auto shadow-inner">
+              {/* Console box */}
+              <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-6 font-mono text-sm space-y-3 h-96 overflow-y-auto">
                 {crawlLogs.map((log, i) => (
-                  <div key={i} className="text-slate-300">
-                    <span className="text-slate-600 mr-2">[{new Date().toLocaleTimeString()}]</span>
+                  <div key={i} className="text-black border-b border-gray-100 pb-2">
+                    <span className="text-gray-400 font-bold mr-3">{new Date().toLocaleTimeString()}</span>
                     {log}
                   </div>
                 ))}
                 {crawlingStatus === 'running' && (
-                  <div className="text-indigo-400 flex items-center gap-2 italic animate-pulse mt-2">
+                  <div className="text-pink-600 font-bold flex items-center gap-2 animate-pulse mt-4">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Crawl running... Scanning forms and interactive links...
+                    > Scanner engaged. Analyzing interactive DOM nodes...
                   </div>
                 )}
                 {crawlLogs.length === 0 && (
-                  <div className="text-slate-500 italic text-center py-24">No logs available. Click 'Analyze Website' to initiate analysis.</div>
+                  <div className="text-gray-400 font-bold text-center py-32 uppercase tracking-widest">No logs available. Initialize Analysis.</div>
                 )}
               </div>
             </div>
@@ -582,52 +551,55 @@ export default function Dashboard() {
 
           {/* TAB 3: ACTIONS */}
           {activeTab === 'actions' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
-                  <Compass className="text-emerald-400" />
-                  Semantic Actions Explorer
+                <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
+                  <Compass className="h-8 w-8" />
+                  ACTION DICTIONARY
                 </h2>
-                <p className="text-slate-400 text-sm mt-1">Interactive DOM elements classified into high-level agent intents.</p>
+                <p className="text-gray-600 font-medium mt-2">Classified DOM elements and agent intents.</p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {actions.map((act) => {
                   const params = JSON.parse(act.parameters || "[]");
                   return (
-                    <div key={act.id} className="bg-slate-900/40 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-6 transition duration-200">
-                      <div className="flex justify-between items-start">
+                    <div key={act.id} className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-6 transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b-2 border-gray-100 pb-4">
                         <div>
                           <div className="flex items-center gap-3">
-                            <h3 className="text-lg font-bold text-slate-100">{act.name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider ${act.action_type === 'api' ? 'bg-indigo-600/30 text-indigo-300' : 'bg-slate-800 text-slate-400'}`}>
+                            <h3 className="text-xl font-black uppercase">{act.name}</h3>
+                            <span className={`px-3 py-1 border-2 border-black font-bold text-xs uppercase tracking-wider ${act.action_type === 'api' ? 'bg-pink-200' : 'bg-gray-100'}`}>
                               {act.action_type}
                             </span>
-                            <span className="text-xs text-slate-500">Confidence Score: <strong className="text-emerald-400">{(act.confidence_score * 100).toFixed(0)}%</strong></span>
                           </div>
-                          <p className="text-slate-400 text-sm mt-2">{act.description}</p>
+                          <p className="text-gray-600 font-medium mt-2">{act.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest">Confidence</span>
+                          <strong className="text-2xl font-black">{(act.confidence_score * 100).toFixed(0)}%</strong>
                         </div>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <div className="text-xs text-slate-500 font-semibold mb-1 uppercase tracking-wider">DOM Anchor Selector</div>
-                          <code className="bg-slate-950 px-2.5 py-1 rounded text-xs border border-slate-850 font-mono text-emerald-400">{act.selector}</code>
+                          <div className="text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">Anchor Selector</div>
+                          <code className="block bg-gray-50 p-2 border-2 border-black rounded-none font-mono text-sm font-bold">{act.selector}</code>
                         </div>
                         <div>
-                          <div className="text-xs text-slate-500 font-semibold mb-1 uppercase tracking-wider">Parameters Schema</div>
+                          <div className="text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">Required Params</div>
                           {params.length > 0 ? (
-                            <div className="space-y-1 mt-1">
+                            <div className="space-y-2">
                               {params.map((p: any, idx: number) => (
-                                <div key={idx} className="text-xs flex items-center gap-2">
-                                  <strong className="text-slate-300">{p.name}</strong>
-                                  <span className="text-slate-600">({p.type})</span>
-                                  {p.selector && <code className="bg-slate-950 text-slate-400 px-1 py-0.5 rounded font-mono scale-95">{p.selector}</code>}
+                                <div key={idx} className="text-sm font-medium flex items-center gap-2 bg-gray-50 p-2 border-2 border-black">
+                                  <strong className="text-black">{p.name}</strong>
+                                  <span className="text-gray-500 text-xs uppercase">({p.type})</span>
+                                  {p.selector && <code className="ml-auto text-xs bg-white px-2 py-1 border border-black font-mono">{p.selector}</code>}
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-500 italic">No parameters required</span>
+                            <span className="block bg-gray-50 p-2 border-2 border-black font-medium text-sm text-gray-500 italic">No parameters required</span>
                           )}
                         </div>
                       </div>
@@ -640,36 +612,35 @@ export default function Dashboard() {
 
           {/* TAB 4: WORKFLOW VISUALIZER */}
           {activeTab === 'workflow' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
-                  <Workflow className="text-blue-400" />
-                  Workflow Visualizer
+                <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
+                  <Workflow className="h-8 w-8" />
+                  STATE MACHINES
                 </h2>
-                <p className="text-slate-400 text-sm mt-1">Finite state machines modeling sequential actions.</p>
+                <p className="text-gray-600 font-medium mt-2">Sequential step logic mapped for agents.</p>
               </div>
 
               {workflows.map((wf) => (
-                <div key={wf.id} className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-8">
-                  <h3 className="text-lg font-bold mb-1">{wf.name}</h3>
-                  <p className="text-slate-400 text-sm mb-8">{wf.description}</p>
-                  
-                  {/* FSM Visualization Flowchart */}
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative">
+                <div key={wf.id} className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-8">
+                  <h3 className="text-xl font-black uppercase mb-2">{wf.name}</h3>
+                  <p className="text-gray-600 font-medium mb-10">{wf.description}</p>
+
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative">
                     {wf.steps.map((step: any, index: number) => (
                       <React.Fragment key={index}>
-                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 w-full md:w-56 text-center relative z-10 hover:border-indigo-500 transition duration-300">
-                          <div className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">Step {index + 1}</div>
-                          <div className="font-bold text-slate-200 mt-2 text-sm">{step.action}</div>
-                          <div className="text-xs text-slate-500 mt-2 flex justify-between border-t border-slate-900 pt-2">
-                            <span>{step.source_page}</span>
-                            <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
-                            <span>{step.target_page}</span>
+                        <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_#f472b6] p-6 w-full md:w-64 text-center relative z-10">
+                          <div className="text-xs font-black text-pink-500 uppercase tracking-widest bg-pink-50 inline-block px-2 py-1 border border-pink-200 mb-3">Step {index + 1}</div>
+                          <div className="font-black text-lg uppercase mb-4">{step.action}</div>
+                          <div className="text-xs font-bold text-gray-500 flex justify-between border-t-2 border-gray-100 pt-3">
+                            <span className="bg-gray-100 px-1">{step.source_page}</span>
+                            <ChevronRight className="h-4 w-4 text-black mx-1" />
+                            <span className="bg-gray-100 px-1">{step.target_page}</span>
                           </div>
                         </div>
                         {index < wf.steps.length - 1 && (
-                          <div className="hidden md:block flex-grow h-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 relative">
-                            <span className="absolute right-0 -top-1.5 h-3.5 w-3.5 rounded-full bg-blue-500 animate-ping"></span>
+                          <div className="hidden md:block flex-grow border-t-4 border-dashed border-black relative top-0 mx-2">
+                            <span className="absolute -right-2 -top-2.5 h-4 w-4 bg-white border-2 border-black rotate-45"></span>
                           </div>
                         )}
                       </React.Fragment>
@@ -682,33 +653,33 @@ export default function Dashboard() {
 
           {/* TAB 5: API EXPLORER */}
           {activeTab === 'api' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
-                  <Database className="text-indigo-400" />
-                  Discovered API Router
+                <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
+                  <Database className="h-8 w-8" />
+                  API MAPPER
                 </h2>
-                <p className="text-slate-400 text-sm mt-1">Automatic mapping of browser interface events to direct backend API endpoints.</p>
+                <p className="text-gray-600 font-medium mt-2">Browser intent to direct background API translations.</p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {apis.map((api) => (
-                  <div key={api.id} className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-6 flex justify-between items-center hover:border-slate-700 transition">
+                  <div key={api.id} className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-6 flex flex-col md:flex-row justify-between gap-6">
                     <div>
-                      <div className="flex items-center gap-3">
-                        <span className="bg-emerald-600/30 text-emerald-300 font-bold px-2.5 py-1 rounded text-xs">
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="bg-black text-white font-black px-3 py-1.5 text-sm uppercase tracking-wider shadow-[2px_2px_0px_0px_#f472b6] border border-black">
                           {api.method}
                         </span>
-                        <code className="text-sm font-mono text-slate-200">{api.url}</code>
+                        <code className="text-lg font-bold font-mono">{api.url}</code>
                       </div>
-                      <div className="text-xs text-slate-500 mt-3">
-                        Maps to action intent: <strong className="text-indigo-400">{api.mapped_action}</strong>
+                      <div className="text-sm font-medium text-gray-600 bg-pink-50 border border-black p-3 inline-block">
+                        Resolved Intent: <strong className="text-black uppercase">{api.mapped_action}</strong>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <div className="text-xs text-slate-500 uppercase font-semibold">Request Body Schema</div>
-                      <pre className="bg-slate-950 p-2.5 border border-slate-900 rounded font-mono text-xs text-left text-slate-400 mt-1.5">
+                    <div className="md:w-1/2">
+                      <div className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Expected Payload</div>
+                      <pre className="bg-gray-50 p-4 border-2 border-black font-mono text-sm font-bold text-black overflow-x-auto">
                         {JSON.stringify(api.request_body, null, 2)}
                       </pre>
                     </div>
@@ -720,53 +691,45 @@ export default function Dashboard() {
 
           {/* TAB 6: SDK GENERATOR */}
           {activeTab === 'sdk' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row justify-between md:items-end gap-6">
                 <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
-                    <Code className="text-blue-400" />
-                    SDK Code Generator
+                  <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
+                    <Code className="h-8 w-8" />
+                    COMPILED ASSETS
                   </h2>
-                  <p className="text-slate-400 text-sm mt-1">Download compiled agent navigation specs and multi-language wrappers.</p>
+                  <p className="text-gray-600 font-medium mt-2">Ready-to-use specifications and language wrappers.</p>
                 </div>
-                <div className="flex gap-3">
-                  <a 
-                    href="file:///Users/adityadixit/Documents/Code/Preflight Designer/shared/specs/preflight.yaml"
-                    download="preflight.yaml"
-                    className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-300 transition"
-                  >
-                    <Download className="h-3.5 w-3.5" />
+                <div className="flex gap-4">
+                  <button className="flex items-center gap-2 bg-white text-black border-2 border-black px-4 py-2 font-black text-sm uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] transition-all">
+                    <Download className="h-4 w-4" />
                     YAML Spec
-                  </a>
-                  <a 
-                    href="file:///Users/adityadixit/Documents/Code/Preflight Designer/shared/specs/sdk.py"
-                    download="sdk.py"
-                    className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-300 transition"
-                  >
-                    <Download className="h-3.5 w-3.5" />
+                  </button>
+                  <button className="flex items-center gap-2 bg-white text-black border-2 border-black px-4 py-2 font-black text-sm uppercase tracking-wider shadow-[4px_4px_0px_0px_#f472b6] hover:shadow-[2px_2px_0px_0px_#f472b6] hover:translate-y-[2px] hover:translate-x-[2px] transition-all">
+                    <Download className="h-4 w-4 text-pink-500" />
                     Python SDK
-                  </a>
+                  </button>
                 </div>
               </div>
 
               {/* Code Previews */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <div className="text-sm font-bold text-slate-300 flex items-center gap-1.5">
-                    <FileText className="h-4 w-4 text-emerald-400" />
-                    preflight.yaml (Nav Specification)
+                  <div className="text-sm font-black uppercase tracking-widest flex items-center gap-2 bg-gray-100 p-3 border-2 border-black border-b-0">
+                    <FileText className="h-4 w-4" />
+                    preflight.yaml
                   </div>
-                  <pre className="bg-slate-950 border border-slate-800/80 rounded-xl p-5 overflow-auto text-xs font-mono h-96 text-slate-300 shadow-inner">
+                  <pre className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 overflow-auto text-sm font-mono font-bold h-[500px]">
                     {specs.yaml}
                   </pre>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-sm font-bold text-slate-300 flex items-center gap-1.5">
-                    <Code className="h-4 w-4 text-indigo-400" />
-                    sdk.py (Python SDK Wrapper)
+                  <div className="text-sm font-black uppercase tracking-widest flex items-center gap-2 bg-pink-100 p-3 border-2 border-black border-b-0">
+                    <Code className="h-4 w-4" />
+                    sdk.py
                   </div>
-                  <pre className="bg-slate-950 border border-slate-800/80 rounded-xl p-5 overflow-auto text-xs font-mono h-96 text-slate-300 shadow-inner">
+                  <pre className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 overflow-auto text-sm font-mono font-bold h-[500px]">
                     {specs.python}
                   </pre>
                 </div>
