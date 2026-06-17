@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation | Shiny Fishstick Developer Hub</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- DESIGN SYSTEM TOKENS (DESIGN.md REALIGNMENT) --- */
+        :root {
+            --color-primary: #cc785c;
+            --color-primary-active: #a9583e;
+            --color-ink: #141413;
+            --color-body: #3d3d3a;
+            --color-muted: #6c6a64;
+            --color-muted-soft: #8e8b82;
+            --color-hairline: #e6dfd8;
+            --color-canvas: #faf9f5;
+            --color-surface-soft: #f5f0e8;
+            --color-surface-card: #efe9de;
+            --color-surface-dark: #181715;
+            --color-surface-dark-elevated: #252320;
+            --color-surface-dark-soft: #1f1e1b;
+            --color-on-primary: #ffffff;
+            --color-on-dark: #faf9f5;
+            --color-on-dark-soft: #a09d96;
+            
+            --font-display: 'Cormorant Garamond', Garamond, serif;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --max-width: 1200px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--color-canvas);
+            color: var(--color-ink);
+            font-family: var(--font-body);
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .top-nav {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--color-hairline);
+            padding: 0 48px;
+            background-color: rgba(250, 249, 245, 0.85);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .layout-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 768px) {
+            .layout-container {
+                grid-template-columns: 260px 1fr;
+            }
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            padding: 40px 24px;
+            border-right: 1px solid var(--color-hairline);
+            height: calc(100vh - 64px);
+            position: sticky;
+            top: 64px;
+            overflow-y: auto;
+            display: none;
+            background-color: var(--color-surface-soft);
+        }
+
+        @media (min-width: 768px) {
+            .sidebar {
+                display: block;
+            }
+        }
+
+        .sidebar-section {
+            margin-bottom: 32px;
+        }
+
+        .sidebar-heading {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--color-primary);
+            margin-bottom: 12px;
+        }
+
+        .sidebar-links {
+            list-style: none;
+        }
+
+        .sidebar-links li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-links a {
+            font-size: 14px;
+            color: var(--color-muted);
+            transition: color 0.2s ease;
+        }
+
+        .sidebar-links a:hover, .sidebar-links a.active {
+            color: var(--color-ink);
+        }
+
+        /* Documentation Content */
+        .content {
+            padding: 40px 24px;
+            max-width: 800px;
+        }
+
+        @media (min-width: 768px) {
+            .content {
+                padding: 60px 48px;
+            }
+        }
+
+        .doc-section {
+            margin-bottom: 80px;
+            scroll-margin-top: 80px;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            font-size: 48px;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            font-size: 32px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--color-hairline);
+            padding-bottom: 8px;
+            margin-top: 40px;
+            letter-spacing: -0.5px;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            margin-top: 24px;
+            color: var(--color-ink);
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 16px;
+            color: var(--color-body);
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        ul, ol {
+            margin-left: 24px;
+            margin-bottom: 20px;
+            color: var(--color-body);
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            font-family: var(--font-code);
+            background-color: var(--color-surface-card);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--color-ink);
+        }
+
+        pre {
+            font-family: var(--font-code);
+            background-color: var(--color-surface-dark);
+            border: 1px solid var(--color-surface-dark-elevated);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: var(--color-on-dark);
+        }
+
+        /* Alerts */
+        .alert {
+            background-color: var(--color-surface-card);
+            border-left: 3px solid var(--color-primary);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 24px;
+        }
+
+        .alert p {
+            margin-bottom: 0;
+            color: var(--color-body);
+            font-size: 15px;
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--color-hairline);
+            padding: 40px 0;
+            text-align: center;
+            font-size: 13px;
+            color: var(--color-muted);
+            margin-top: 80px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <a href="index.html" class="nav-brand">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" style="margin-right: 4px;">
+                <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+            </svg>
+            <span style="font-family: var(--font-body); font-weight: 600; font-size: 17px;">Shiny Fishstick</span>
+        </a>
+        <div style="display: flex; gap: 24px; align-items: center;">
+            <a href="index.html" style="font-size: 14px; color: var(--color-muted);">Home</a>
+            <a href="index.html#download-center" class="btn btn-primary" style="height: 36px; font-size: 13px; padding: 0 16px; border-radius: 4px;">Get SDK</a>
+        </div>
+    </nav>
+
+    <div class="layout-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h4 class="sidebar-heading">Introduction</h4>
+                <ul class="sidebar-links">
+                    <li><a href="#overview">Overview</a></li>
+                    <li><a href="#pipeline">Compilation Pipeline</a></li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h4 class="sidebar-heading">Core Engine</h4>
+                <ul class="sidebar-links">
+                    <li><a href="#crawler">BFS Crawler</a></li>
+                    <li><a href="#heuristics">Heuristic Analyzer</a></li>
+                    <li><a href="#intent">Intent & AI Engine</a></li>
+                    <li><a href="#api-upgrades">API Upgrades</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h4 class="sidebar-heading">Advanced Features</h4>
+                <ul class="sidebar-links">
+                    <li><a href="#auth-session">Session Serialization</a></li>
+                    <li><a href="#token-prop">Token Propagation</a></li>
+                    <li><a href="#mcp-server">Model Context Protocol</a></li>
+                    <li><a href="#tests">E2E Verification</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- OVERVIEW -->
+            <section id="overview" class="doc-section">
+                <h1>Documentation</h1>
+                <p>Welcome to the Shiny Fishstick reference documentation. Learn how to compile arbitrary web platforms into structural, high-speed API layers for AI browser agents.</p>
+                
+                <div class="alert">
+                    <p><strong>Note:</strong> Make sure you have Node.js 18+ and Python 3.9+ installed in your developer workspace to compile targets.</p>
+                </div>
+
+                <h2>Overview</h2>
+                <p>AI browser agents spend up to 90% of their runtime downloading raw HTML resources, rendering CSS styles, guessing dynamic identifiers, and waiting for heavy scripts to execute. Shiny Fishstick acts as a pre-compiler mapping these heavy interactions into clean SDK bindings.</p>
+            </section>
+
+            <!-- PIPELINE -->
+            <section id="pipeline" class="doc-section">
+                <h2>Compilation Pipeline</h2>
+                <p>The compiler runs target websites through a multi-stage compilation framework:</p>
+                <ol>
+                    <li><strong>Crawling & Mapping:</strong> Playwright navigates seed pages, clusters dynamic parameters, and tracks state rules.</li>
+                    <li><strong>Scoring Selectors:</strong> Gathers potential interactive controls and rates their uniqueness weights.</li>
+                    <li><strong>Interception & Upgrades:</strong> Monitored fetches replace button clicks with REST queries.</li>
+                    <li><strong>FSM Compilation:</strong> Chains consecutive actions into transition nodes.</li>
+                </ol>
+            </section>
+
+            <!-- CRAWLER -->
+            <section id="crawler" class="doc-section">
+                <h2>BFS Crawler</h2>
+                <p>The Playwright-backed Crawler traversal scans targets starting at a seed URL. To prevent path expansion loops on database items (such as `/item/1` or `/item/52`), it clusters path routes into structural parameters, like `/item/{id}`.</p>
+                <pre><code># Start the crawler backend scan
+python3 -m backend.app.main --crawl http://localhost:8001</code></pre>
+            </section>
+
+            <!-- HEURISTICS -->
+            <section id="heuristics" class="doc-section">
+                <h2>Heuristic Selector Analyzer</h2>
+                <p>To withstand layout edits and CSS drift (common in Tailwind compiles), target DOM nodes are ranked by specificity and intent:</p>
+                <ul>
+                    <li><code>data-testid</code> (Score: <strong>1.0</strong>) — Purpose-built QA keys.</li>
+                    <li><code>id</code> (Score: <strong>0.9</strong>) — Unique element keys.</li>
+                    <li><code>name</code> (Score: <strong>0.7</strong>) — Form inputs.</li>
+                    <li><code>class</code> (Score: <strong>0.4</strong>) — Visual identifiers.</li>
+                    <li><code>XPath / Tag</code> (Score: <strong>0.1</strong>) — Layout structure.</li>
+                </ul>
+            </section>
+
+            <!-- INTENT -->
+            <section id="intent" class="doc-section">
+                <h2>Intent & AI Engine</h2>
+                <p>Clusters separated form elements (like email fields, password fields, and submit buttons) into singular, high-level methods (e.g. <code>login(email, password)</code>). The engine uses the Gemini API when available, and falls back to local regex-based classification lists offline.</p>
+            </section>
+
+            <!-- API UPGRADES -->
+            <section id="api-upgrades" class="doc-section">
+                <h2>API Intercept & Upgrades</h2>
+                <p>When the crawler acts on a selector, the interceptor snoops network sockets. If a button trigger fires an XHR fetch query, the click is mapped directly to a REST api method in the final SDK class, completely bypassing page layouts during runtime.</p>
+            </section>
+
+            <!-- AUTH & SESSION -->
+            <section id="auth-session" class="doc-section">
+                <h2>Session Serialization (Feature A)</h2>
+                <p>If the crawler hits a validation wall, it runs credentials matching. Upon success, the session snapshots all active tokens and databases:</p>
+                <ul>
+                    <li>HTTP Only & Session Cookies</li>
+                    <li>LocalStorage keys</li>
+                    <li>SessionStorage keys</li>
+                </ul>
+                <p>The generated SDK allows you to save and seed these credentials using standard serializations:</p>
+                <pre><code style="color: var(--color-primary);"># Save authorized states
+session_data = sdk.export_session()
+
+# Bootstrap new clients without logging in again
+sdk_new = ShinyFishstickSiteSDK()
+sdk_new.start(session_data=session_data)</code></pre>
+            </section>
+
+            <!-- TOKEN PROPAGATION -->
+            <section id="token-prop" class="doc-section">
+                <h2>Token Propagation (Feature C)</h2>
+                <p>For API upgraded endpoints, the SDK automatically correlates intercepted headers (like <code>Authorization: Bearer [JWT]</code>) with their storage source (cookies or localStorage keys), propagating authentication variables back into API actions dynamically.</p>
+            </section>
+
+            <!-- MCP SERVER -->
+            <section id="mcp-server" class="doc-section">
+                <h2>Model Context Protocol (MCP) (Feature D)</h2>
+                <p>The compiler generates a Model Context Protocol server. This lets LLMs running in workspaces (like Cursor or Claude Desktop) invoke site routines directly as standard tools.</p>
+                <h3>Setup cursor tool config:</h3>
+                <pre><code># Run in a background terminal
+python3 mcp_server.py</code></pre>
+                <p>Add it to Cursor Settings under "MCP Servers" by naming it and passing the command: <code>python3 /absolute/path/to/mcp_server.py</code></p>
+            </section>
+
+            <!-- TESTS -->
+            <section id="tests" class="doc-section">
+                <h2>E2E SDK Test Generation (Feature E)</h2>
+                <p>Spits out an integration verification suite (<code>test_sdk.py</code>) mapping the exact workflow states discovered. Run it to ensure that target selectors haven't drifted:</p>
+                <pre><code># Runs generated integration assertions
+python3 test_sdk.py</code></pre>
+            </section>
+
+            <footer class="footer">
+                &copy; 2026 Shiny Fishstick Open Source. Licensed under MIT.
+            </footer>
+        </main>
+    </div>
+
+</body>
+</html>

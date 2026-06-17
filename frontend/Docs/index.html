@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shiny Fishstick | The Navigation Layer for AI Browser Agents</title>
+    <meta name="description" content="Compile any website into a structured, semantic action layer. Let browser agents navigate via direct API upgrades and auto-generated MCP server tools.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- DESIGN SYSTEM TOKENS (DESIGN.md REALIGNMENT) --- */
+        :root {
+            /* Colors */
+            --color-primary: #cc785c;
+            --color-primary-active: #a9583e;
+            --color-primary-disabled: #e6dfd8;
+            --color-ink: #141413;
+            --color-body: #3d3d3a;
+            --color-body-strong: #252523;
+            --color-muted: #6c6a64;
+            --color-muted-soft: #8e8b82;
+            --color-hairline: #e6dfd8;
+            --color-hairline-soft: #ebe6df;
+            --color-canvas: #faf9f5;
+            --color-surface-soft: #f5f0e8;
+            --color-surface-card: #efe9de;
+            --color-surface-cream-strong: #e8e0d2;
+            --color-surface-dark: #181715;
+            --color-surface-dark-elevated: #252320;
+            --color-surface-dark-soft: #1f1e1b;
+            --color-on-primary: #ffffff;
+            --color-on-dark: #faf9f5;
+            --color-on-dark-soft: #a09d96;
+            
+            /* Syntax Accents */
+            --color-accent-teal: #5db8a6;
+            --color-accent-amber: #e8a55a;
+            --color-success: #5db872;
+            --color-warning: #d4a017;
+            --color-error: #c64545;
+
+            /* Typography */
+            --font-display: 'Cormorant Garamond', Garamond, serif;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+
+            /* Spacing & Layout */
+            --spacing-section: 96px;
+            --spacing-xl: 32px;
+            --max-width: 1200px;
+        }
+
+        /* --- BASE STYLES --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--color-canvas);
+            color: var(--color-ink);
+            font-family: var(--font-body);
+            font-size: 16px;
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::selection {
+            background-color: var(--color-primary);
+            color: var(--color-on-primary);
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: color 0.2s ease;
+        }
+
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        @media (min-width: 1024px) {
+            .container { padding: 0 48px; }
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3, h4, .display-font {
+            font-family: var(--font-display);
+            font-weight: 400;
+            letter-spacing: -0.02em;
+        }
+
+        .display-xl {
+            font-size: 64px;
+            line-height: 1.05;
+            letter-spacing: -1.5px;
+        }
+
+        .display-md {
+            font-size: 36px;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+        }
+
+        .display-sm {
+            font-size: 28px;
+            line-height: 1.2;
+            letter-spacing: -0.3px;
+        }
+
+        .title-md {
+            font-family: var(--font-body);
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        /* --- COMPONENTS --- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            padding: 12px 20px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: var(--color-on-primary);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-active);
+        }
+
+        .btn-secondary {
+            background-color: var(--color-canvas);
+            color: var(--color-ink);
+            border: 1px solid var(--color-hairline);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--color-surface-soft);
+        }
+
+        .btn-secondary-on-dark {
+            background-color: var(--color-surface-dark-elevated);
+            color: var(--color-on-dark);
+        }
+
+        .btn-secondary-on-dark:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Navigation */
+        .top-nav {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--color-hairline);
+            background-color: rgba(250, 249, 245, 0.85);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: var(--color-ink);
+        }
+
+        .nav-links {
+            display: none;
+            gap: 28px;
+            font-size: 14px;
+            color: var(--color-muted);
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: var(--color-ink);
+        }
+
+        @media (min-width: 768px) {
+            .nav-links { display: flex; }
+        }
+
+        /* Layout Grids */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 48px;
+        }
+
+        @media (min-width: 1024px) {
+            .grid-2 { grid-template-columns: 1fr 1fr; align-items: center; }
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* Sections */
+        .section-padding {
+            padding: var(--spacing-section) 0;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--color-surface-card);
+            color: var(--color-ink);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            margin-bottom: 32px;
+        }
+
+        /* Cards */
+        .feature-card {
+            background-color: var(--color-surface-card);
+            border-radius: 12px;
+            padding: var(--spacing-xl);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--color-hairline);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--color-canvas);
+            border: 1px solid var(--color-hairline);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-primary);
+            margin-bottom: 24px;
+        }
+
+        .product-mockup-dark {
+            background-color: var(--color-surface-dark);
+            border-radius: 12px;
+            padding: 24px;
+            color: var(--color-on-dark);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--color-surface-dark-elevated);
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.red { background-color: var(--color-error); }
+        .dot.yellow { background-color: var(--color-warning); }
+        .dot.green { background-color: var(--color-success); }
+
+        .mockup-tabs {
+            display: flex;
+            margin-left: 16px;
+            gap: 12px;
+        }
+
+        .mockup-tab {
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-on-dark-soft);
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .mockup-tab.active {
+            color: var(--color-on-dark);
+            background-color: var(--color-surface-dark-elevated);
+        }
+
+        /* Code Blocks */
+        pre {
+            font-family: var(--font-code);
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--color-on-dark-soft);
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .code-teal { color: var(--color-accent-teal); }
+        .code-amber { color: var(--color-accent-amber); }
+        .code-coral { color: var(--color-primary); }
+
+        /* Spec & Code Explorer */
+        .explorer-section {
+            background-color: var(--color-surface-dark);
+            color: var(--color-on-dark);
+        }
+
+        .explorer-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            border: 1px solid var(--color-surface-dark-elevated);
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: var(--color-surface-dark-soft);
+        }
+
+        @media (min-width: 768px) {
+            .explorer-container {
+                grid-template-columns: 260px 1fr;
+            }
+        }
+
+        .explorer-sidebar {
+            background-color: var(--color-surface-dark);
+            border-bottom: 1px solid var(--color-surface-dark-elevated);
+            padding: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .explorer-sidebar {
+                border-bottom: none;
+                border-right: 1px solid var(--color-surface-dark-elevated);
+            }
+        }
+
+        .explorer-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--color-on-dark-soft);
+            margin-bottom: 16px;
+        }
+
+        .file-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--color-on-dark-soft);
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--color-on-dark);
+        }
+
+        .file-item.active {
+            background-color: var(--color-surface-dark-elevated);
+            color: var(--color-on-dark);
+            font-weight: 500;
+        }
+
+        /* Download Center & Distribution */
+        .download-card {
+            background-color: var(--color-surface-card);
+            border: 1px solid var(--color-hairline);
+            border-radius: 12px;
+            padding: 40px;
+        }
+
+        .guide-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--color-hairline);
+            margin-bottom: 24px;
+            gap: 16px;
+        }
+
+        .guide-tab {
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-muted);
+            cursor: pointer;
+            padding-bottom: 12px;
+            position: relative;
+            background: none;
+            border: none;
+        }
+
+        .guide-tab.active {
+            color: var(--color-primary);
+        }
+
+        .guide-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--color-primary);
+        }
+
+        .guide-content {
+            display: none;
+        }
+
+        .guide-content.active {
+            display: block;
+        }
+
+        .step-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 16px;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: rgba(204, 120, 92, 0.1);
+            border: 1px solid var(--color-primary);
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-detail h4 {
+            font-size: 16px;
+            color: var(--color-ink);
+            margin-bottom: 6px;
+            font-family: var(--font-body);
+            font-weight: 600;
+        }
+
+        .step-detail p {
+            font-size: 14px;
+            color: var(--color-body);
+            margin-bottom: 12px;
+        }
+
+        .step-code {
+            background-color: rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--color-hairline);
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-family: var(--font-code);
+            font-size: 13px;
+            color: var(--color-primary-active);
+        }
+
+        /* Callout / Footer */
+        .cta-band-coral {
+            background-color: var(--color-primary);
+            color: var(--color-on-primary);
+            border-radius: 12px;
+            padding: 64px 48px;
+            text-align: center;
+            position: relative;
+        }
+
+        .footer {
+            background-color: var(--color-surface-dark);
+            color: var(--color-on-dark-soft);
+            padding: 64px 0 32px 0;
+            font-size: 14px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 64px;
+        }
+
+        @media (max-width: 1024px) {
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .footer-grid { grid-template-columns: 1fr; }
+        }
+
+        .footer-heading {
+            color: var(--color-on-dark);
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a:hover {
+            color: var(--color-on-dark);
+        }
+
+        hr.divider {
+            border: 0;
+            height: 1px;
+            background-color: var(--color-hairline);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav container">
+        <div style="display: flex; align-items: center; gap: 32px;">
+            <a href="index.html" class="nav-brand">
+                <!-- Anthropic signature radial-spike SVG -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" style="margin-right: 4px;">
+                    <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+                </svg>
+                <span style="font-family: var(--font-body); font-weight: 600; font-size: 17px;">Shiny Fishstick</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#code-explorer">Specs & Code</a>
+                <a href="#download-center">Install SDK</a>
+                <a href="docs.html">Documentation</a>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <a href="#download-center" class="btn btn-primary">Get the SDK</a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="container section-padding grid-2">
+        <div>
+            <div class="badge-pill">Compiler v1.0.0 is live</div>
+            <h1 class="display-xl" style="margin-bottom: 32px;">The Navigation Layer for AI Browser Agents.</h1>
+            <p style="font-size: 18px; color: var(--color-body); margin-bottom: 32px; max-width: 500px; font-weight: 400;">
+                Pre-compile any human-centric website into a structured, semantic action layer. Let agents execute routines with the stability, speed, and safety of a native REST API.
+            </p>
+            <div style="display: flex; gap: 16px;">
+                <a href="docs.html" class="btn btn-primary">Read the Docs</a>
+                <a href="#download-center" class="btn btn-secondary">Download Center</a>
+            </div>
+        </div>
+
+        <div class="product-mockup-dark">
+            <div class="mockup-header">
+                <div class="dot red"></div>
+                <div class="dot yellow"></div>
+                <div class="dot green"></div>
+                <div class="mockup-tabs">
+                    <div class="mockup-tab active" onclick="swapHeroCode('agent')">agent_script.py</div>
+                    <div class="mockup-tab" onclick="swapHeroCode('run')">sdk_init.py</div>
+                </div>
+                <button id="copy-hero-btn" style="margin-left: auto; background: none; border: none; color: var(--color-on-dark-soft); cursor: pointer; font-family: var(--font-body); font-size: 12px;">Copy</button>
+            </div>
+            <div style="padding: 16px 0;">
+                <pre id="hero-code-block" style="color: #c5c2bb;"><span class="code-teal"># Initialize compiled Site SDK</span>
+site = ShinyFishstickSiteSDK(<span class="code-amber">"http://my-shop.com"</span>)
+site.start()
+
+<span class="code-teal"># State transition: authenticated session serialization</span>
+site.login(email=<span class="code-amber">"agent@gemini.com"</span>, password=<span class="code-amber">"secure123"</span>)
+site.search_products(q=<span class="code-amber">"running shoes"</span>)
+
+<span class="code-teal"># Executes directly via direct API upgrade!</span>
+site.add_to_cart(product_id=<span class="code-amber">"42"</span>, quantity=<span class="code-coral">1</span>)
+site.checkout()</pre>
+            </div>
+        </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- CORE FEATURES SECTION -->
+    <section id="features" class="container section-padding">
+        <h2 class="display-md" style="text-align: center; margin-bottom: 64px;">From DOM Chaos to Semantic Stability</h2>
+        
+        <div class="grid-3">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                </div>
+                <h3 class="title-md" style="margin-bottom: 12px;">XHR Interception & API Upgrades</h3>
+                <p style="color: var(--color-body); font-size: 14.5px;">Monitors network boundaries during crawling and maps browser clicks to direct, high-speed API requests.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <h3 class="title-md" style="margin-bottom: 12px;">Heuristic DOM Scoring</h3>
+                <p style="color: var(--color-body); font-size: 14.5px;">Ranks CSS target selectors (`data-testid` > `id` > `name` > `class`) to survive interface updates and element changes.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.79M8.21 13.79a8 8 0 1111.58 4.21" />
+                    </svg>
+                </div>
+                <h3 class="title-md" style="margin-bottom: 12px;">State Machine Discovery</h3>
+                <p style="color: var(--color-body); font-size: 14.5px;">Tracks sequential page dependencies to translate browser actions into a verified Finite State Machine.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h3 class="title-md" style="margin-bottom: 12px;">Auth & Storage Serialization</h3>
+                <p style="color: var(--color-body); font-size: 14.5px;">Automatically detects authorization forms and snapshots cookies, localStorage, and sessionStorage snapshots.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <h3 class="title-md" style="margin-bottom: 12px;">Token Propagation</h3>
+                <p style="color: var(--color-body); font-size: 14.5px;">Fuzzy-correlates intercepted bearer headers with storage resources, injecting auth into direct REST routines automatically.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                </div>
+                <h3 class="title-md" style="margin-bottom: 12px;">Auto-Generated MCP Server</h3>
+                <p style="color: var(--color-body); font-size: 14.5px;">Auto-compiles a Model Context Protocol server exposing targets directly as tools to LLMs (Cursor/Claude Code).</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SPEC & CODE EXPLORER -->
+    <section id="code-explorer" class="explorer-section section-padding">
+        <div class="container">
+            <div style="margin-bottom: 48px;">
+                <h2 class="display-md" style="margin-bottom: 16px; color: var(--color-on-dark);">Inside the Specification</h2>
+                <p style="color: var(--color-on-dark-soft); max-width: 600px;">Explore the generated specification and Playwright clients produced by the compiler engine.</p>
+            </div>
+
+            <div class="explorer-container">
+                <div class="explorer-sidebar">
+                    <h4 class="explorer-title">Compiled Files</h4>
+                    <ul class="file-list">
+                        <li class="file-item active" onclick="selectExplorerFile('yaml', this)">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            preflight.yaml
+                        </li>
+                        <li class="file-item" onclick="selectExplorerFile('python', this)">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                            sdk.py (Python)
+                        </li>
+                        <li class="file-item" onclick="selectExplorerFile('typescript', this)">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                            sdk.ts (TypeScript)
+                        </li>
+                        <li class="file-item" onclick="selectExplorerFile('mcp', this)">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                            mcp_server.py
+                        </li>
+                        <li class="file-item" onclick="selectExplorerFile('tests', this)">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                            test_sdk.py (E2E)
+                        </li>
+                    </ul>
+                </div>
+                <div style="padding: 24px; position: relative;">
+                    <button id="copy-explorer-btn" style="position: absolute; top: 16px; right: 20px; background-color: var(--color-surface-dark-elevated); border: 1px solid rgba(255,255,255,0.05); color: var(--color-on-dark-soft); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-family: var(--font-body); font-size: 12px;">Copy</button>
+                    <pre id="explorer-code-block" style="color: #c5c2bb;"></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DOWNLOAD & PACKAGING CENTER -->
+    <section id="download-center" class="container section-padding">
+        <div style="margin-bottom: 56px; text-align: center;">
+            <h2 class="display-md" style="margin-bottom: 16px;">Download & Distribution</h2>
+            <p style="color: var(--color-muted); max-width: 600px; margin: 0 auto;">Generate, package, and deploy compiled browser targets to your module registries.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 40px;">
+            <!-- Downloads Grid -->
+            <div>
+                <h3 class="display-sm" style="margin-bottom: 24px;">Direct Downloads</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+                    <a href="http://localhost:8000/api/projects/proj-1/sdk/python" target="_blank" class="feature-card" style="text-align: center;">
+                        <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="var(--color-primary)" stroke-width="2" style="margin: 0 auto 16px auto;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <h4 class="title-md" style="margin-bottom: 4px;">Python Client</h4>
+                        <span style="font-size: 13px; color: var(--color-muted);">sdk.py</span>
+                    </a>
+                    <a href="http://localhost:8000/api/projects/proj-1/sdk/typescript" target="_blank" class="feature-card" style="text-align: center;">
+                        <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="var(--color-accent-teal)" stroke-width="2" style="margin: 0 auto 16px auto;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <h4 class="title-md" style="margin-bottom: 4px;">TypeScript Client</h4>
+                        <span style="font-size: 13px; color: var(--color-muted);">sdk.ts</span>
+                    </a>
+                    <a href="http://localhost:8000/api/projects/proj-1/sdk/yaml" target="_blank" class="feature-card" style="text-align: center;">
+                        <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="var(--color-accent-amber)" stroke-width="2" style="margin: 0 auto 16px auto;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <h4 class="title-md" style="margin-bottom: 4px;">YAML Navigation Spec</h4>
+                        <span style="font-size: 13px; color: var(--color-muted);">preflight.yaml</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Packaging Guide Tabs -->
+            <div class="download-card">
+                <h3 class="display-sm" style="margin-bottom: 24px;">Packaging & Distribution Guide</h3>
+                
+                <div class="guide-tabs">
+                    <button class="guide-tab active" onclick="switchGuide('python-pkg', this)">Python (pip/PyPI)</button>
+                    <button class="guide-tab" onclick="switchGuide('typescript-pkg', this)">TypeScript (npm)</button>
+                </div>
+
+                <!-- Python Package Guide -->
+                <div id="python-pkg" class="guide-content active">
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-detail">
+                                <h4>Create Package Structure</h4>
+                                <p>Set up a clean directory for your python distribution module:</p>
+                                <div class="step-code">
+                                    mkdir -p my_store_sdk/src/my_store_sdk<br>
+                                    mv sdk.py my_store_sdk/src/my_store_sdk/__init__.py
+                                </div>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-detail">
+                                <h4>Define pyproject.toml</h4>
+                                <p>Create a `pyproject.toml` file inside the root package directory:</p>
+                                <pre style="background: rgba(0,0,0,0.03); border: 1px solid var(--color-hairline); padding: 16px; border-radius: 8px; font-size: 13px; overflow-x: auto; color: var(--color-primary-active);">
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "my_store_sdk"
+version = "1.0.0"
+description = "Compiled Shiny Fishstick Client for E-Commerce"
+dependencies = [
+    "requests>=2.28.0",
+    "playwright>=1.30.0"
+]</pre>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-detail">
+                                <h4>Build and Publish</h4>
+                                <p>Generate the source distribution and wheel, and push to PyPI:</p>
+                                <div class="step-code">
+                                    python3 -m pip install --upgrade build twine<br>
+                                    python3 -m build<br>
+                                    python3 -m twine upload dist/*
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- TypeScript Package Guide -->
+                <div id="typescript-pkg" class="guide-content">
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-detail">
+                                <h4>Create Project Structure</h4>
+                                <p>Create directories and move the TypeScript output into active source:</p>
+                                <div class="step-code">
+                                    mkdir -p my-store-sdk/src<br>
+                                    mv sdk.ts my-store-sdk/src/index.ts
+                                </div>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-detail">
+                                <h4>Add package.json</h4>
+                                <p>Create a standard package manifest in the module root folder:</p>
+                                <pre style="background: rgba(0,0,0,0.03); border: 1px solid var(--color-hairline); padding: 16px; border-radius: 8px; font-size: 13px; overflow-x: auto; color: var(--color-primary-active);">
+{
+  "name": "my-store-sdk",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "playwright": "^1.30.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  }
+}</pre>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-detail">
+                                <h4>Compile & Publish to npm</h4>
+                                <p>Setup types, compile TS files, and upload to npm registry:</p>
+                                <div class="step-code">
+                                    npx tsc --init --declaration --outDir dist<br>
+                                    npm run build<br>
+                                    npm publish --access public
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA BAND -->
+    <section class="container section-padding">
+        <div class="cta-band-coral">
+            <h2 class="display-sm" style="font-size: 36px; margin-bottom: 24px; color: var(--color-on-primary);">Ready to compile your target sites?</h2>
+            <p style="font-size: 18px; margin-bottom: 32px; font-weight: 400; opacity: 0.9; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Bypass complicated DOM scraping. Build stable, fast, and structured API navigation clients for your AI agents today.
+            </p>
+            <div style="display: flex; gap: 16px; justify-content: center;">
+                <a href="docs.html" class="btn" style="background-color: var(--color-canvas); color: var(--color-ink);">Read Documentation</a>
+                <a href="#download-center" class="btn" style="background-color: transparent; border: 1px solid rgba(255,255,255,0.3); color: white;">Get the SDK</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="nav-brand" style="color: var(--color-on-dark); margin-bottom: 24px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+                        </svg>
+                        <span style="font-family: var(--font-body); font-weight: 600;">Shiny Fishstick</span>
+                    </div>
+                    <p style="font-size: 13.5px; line-height: 1.6; color: var(--color-on-dark-soft); font-weight: 300; max-width: 240px;">
+                        Open-source navigation layer compiling raw web apps into structured REST endpoints for agents.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="footer-heading">Product</h4>
+                    <ul class="footer-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#code-explorer">Spec Explorer</a></li>
+                        <li><a href="#download-center">SDK Downloader</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-heading">Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="docs.html">Documentation</a></li>
+                        <li><a href="docs.html#crawler">BFS Crawler Specs</a></li>
+                        <li><a href="docs.html#mcp-server">MCP Setup Guide</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div style="border-top: 1px solid var(--color-surface-dark-elevated); padding-top: 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <p>&copy; 2026 Shiny Fishstick Open Source. Licensed under MIT.</p>
+                <p style="color: var(--color-on-dark-soft);">Designed for high-speed AI Browser Navigation.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE SCRIPTS -->
+    <script>
+        const HERO_CODE = {
+            agent: `# Initialize compiled Site SDK
+site = ShinyFishstickSiteSDK("http://my-shop.com")
+site.start()
+
+# State transition: authenticated session serialization
+site.login(email="agent@gemini.com", password="secure123")
+site.search_products(q="running shoes")
+
+# Executes directly via direct API upgrade!
+site.add_to_cart(product_id="42", quantity=1)
+site.checkout()`,
+            run: `# Running the compiled SDK tests (Feature E)
+# Spins up simulated stores and validates workflows
+python3 -m unittest test_sdk.py
+
+# Initialize the generated MCP Server (Feature D)
+# Connects tool endpoints to standard agent loops
+python3 mcp_server.py`
+        };
+
+        const EXPLORER_CODE = {
+            yaml: `version: 1.0.0
+site: http://localhost:8001
+actions:
+  login:
+    description: Logs in the user with credentials
+    action_type: browser
+    selector: '#login-form'
+    parameters:
+      - name: email
+        type: string
+        required: true
+        selector: '#email'
+      - name: password
+        type: string
+        required: true
+        selector: '#password'
+
+  add_to_cart:
+    description: Adds the current product to shopping cart
+    action_type: api
+    selector: '#add-to-cart-btn'
+    parameters:
+      - name: product_id
+        type: string
+        required: true
+      - name: quantity
+        type: integer
+        required: true
+    api:
+      url: /api/cart/add
+      method: POST`,
+
+            python: `# Shiny Fishstick Generated Python SDK
+import requests
+import json
+from playwright.sync_api import sync_playwright
+
+class ShinyFishstickSiteSDK:
+    def __init__(self, root_url="http://localhost:8001"):
+        self.root_url = root_url
+        self.playwright = None
+        self.browser = None
+        self.context = None
+        self.page = None
+        self.session_cookies = []
+        self.session_local_storage = {}
+
+    def start(self, headless=True, session_data=None):
+        self.playwright = sync_playwright().start()
+        self.browser = self.playwright.chromium.launch(headless=headless)
+        self.context = self.browser.new_context()
+        self.page = self.context.new_page()
+        
+        if session_data:
+            self.context.add_cookies(session_data.get("cookies", []))
+            self.page.goto(self.root_url)
+            # Propagate LocalStorage states
+            ls = session_data.get("localStorage", {})
+            self.page.evaluate("ls => { for(let k in ls) localStorage.setItem(k, ls[k]); }", ls)
+        else:
+            self.page.goto(self.root_url)
+        return self
+
+    def add_to_cart(self, product_id, quantity=1):
+        """Adds product to cart via high-speed API upgrade (Feature C)"""
+        # Read propagated Bearer JWT from LocalStorage automatically
+        token = self.session_local_storage.get("jwt_token")
+        headers = {"Content-Type": "application/json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+            
+        payload = {"product_id": product_id, "quantity": quantity}
+        res = requests.post(self.root_url + "/api/cart/add", json=payload, headers=headers)
+        return res.json()`,
+
+            typescript: `// Shiny Fishstick Generated TypeScript SDK
+import { chromium, Browser, BrowserContext, Page } from 'playwright';
+
+export class ShinyFishstickSiteSDK {
+    private rootUrl: string = "http://localhost:8001";
+    private browser: Browser | null = null;
+    private page: Page | null = null;
+    private sessionLocalStorage: any = {};
+
+    async start(headless: boolean = true): Promise<ShinyFishstickSiteSDK> {
+        this.browser = await chromium.launch({ headless });
+        const context = await this.browser.newContext();
+        this.page = await context.newPage();
+        await this.page.goto(this.rootUrl);
+        return this;
+    }
+
+    async add_to_cart(productId: string, quantity: number): Promise<any> {
+        const token = this.sessionLocalStorage['jwt_token'];
+        const headers: any = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = \`Bearer \${token}\`;
+        }
+        const response = await fetch(\`\${this.rootUrl}/api/cart/add\`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ product_id: productId, quantity })
+        });
+        return response.json();
+    }
+}`,
+
+            mcp: `# Model Context Protocol (MCP) tool implementation (Feature D)
+import sys
+import json
+from sdk import ShinyFishstickSiteSDK
+
+sdk = ShinyFishstickSiteSDK()
+sdk.start(headless=True)
+
+TOOLS = [
+    {
+        "name": "add_to_cart",
+        "description": "Adds the current product to shopping cart",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "product_id": {"type": "string"},
+                "quantity": {"type": "integer"}
+            },
+            "required": ["product_id", "quantity"]
+        }
+    }
+]
+
+def handle_request(req):
+    method = req.get("method")
+    params = req.get("params", {})
+    req_id = req.get("id")
+    
+    if method == "tools/list":
+        return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": TOOLS}}
+    elif method == "tools/call":
+        tool_name = params.get("name")
+        arguments = params.get("arguments", {})
+        if tool_name == "add_to_cart":
+            res = sdk.add_to_cart(**arguments)
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"content": [{"type": "text", "text": str(res)}]}}
+    return None`,
+
+            tests: `# E2E Integration Suite verification (Feature E)
+import unittest
+from sdk import ShinyFishstickSiteSDK
+
+class TestShinyFishstickE2E(unittest.TestCase):
+    def test_purchase_flow(self):
+        """Test workflow purchase FSM path"""
+        sdk = ShinyFishstickSiteSDK("http://localhost:8001")
+        sdk.start(headless=True)
+        try:
+            sdk.login("admin@example.com", "password123")
+            sdk.search_products("running shoes")
+            res = sdk.add_to_cart("2")
+            self.assertEqual(res.get("status"), "success")
+            sdk.checkout()
+        finally:
+            sdk.close()
+
+if __name__ == "__main__":
+    unittest.main()`
+        };
+
+        // Hero Code Tabs
+        function swapHeroCode(tab) {
+            const pre = document.getElementById('hero-code-block');
+            pre.textContent = HERO_CODE[tab];
+            
+            const tabs = document.querySelectorAll('.mockup-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Explorer file tabs
+        function selectExplorerFile(fileKey, element) {
+            const pre = document.getElementById('explorer-code-block');
+            pre.textContent = EXPLORER_CODE[fileKey];
+
+            const items = document.querySelectorAll('.file-item');
+            items.forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // Packaging guide switcher
+        function switchGuide(guideId, button) {
+            const contents = document.querySelectorAll('.guide-content');
+            contents.forEach(content => content.classList.remove('active'));
+            document.getElementById(guideId).classList.add('active');
+
+            const tabs = document.querySelectorAll('.guide-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            button.classList.add('active');
+        }
+
+        // Copy buttons
+        document.getElementById('copy-hero-btn').addEventListener('click', function() {
+            navigator.clipboard.writeText(document.getElementById('hero-code-block').textContent);
+            this.textContent = 'Copied!';
+            setTimeout(() => this.textContent = 'Copy', 2000);
+        });
+
+        document.getElementById('copy-explorer-btn').addEventListener('click', function() {
+            navigator.clipboard.writeText(document.getElementById('explorer-code-block').textContent);
+            this.textContent = 'Copied!';
+            setTimeout(() => this.textContent = 'Copy', 2000);
+        });
+
+        // Initialize default code explorer state
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('explorer-code-block').textContent = EXPLORER_CODE.yaml;
+        });
+    </script>
+</body>
+</html>
