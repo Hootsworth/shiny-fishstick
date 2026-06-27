@@ -1,14 +1,20 @@
-import asyncio
-from urllib.parse import urlparse, urljoin
+import os
+import json
 import re
-from typing import List, Set, Dict, Any
+from typing import List, Set
+from urllib.parse import urljoin, urlparse
+
+from playwright.async_api import async_playwright
+from playwright_stealth import Stealth
 from sqlalchemy.orm import Session
-from ..models.db_models import Page, Element, Action, Crawl
+
+from ..core.security import decrypt_data
+from ..models.db_models import Crawl, Page
 from .analyzer import DOMAnalyzerService
-from .intent import SemanticIntentService
 from .api_disco import APIDiscoveryService
 from .auth import AuthAnalyzerService
-from playwright.async_api import async_playwright
+from .intent import SemanticIntentService
+
 
 class CrawlerService:
     def __init__(self, db: Session, project_id: str, crawl_id: str, root_url: str):
@@ -49,9 +55,25 @@ class CrawlerService:
             self.db.commit()
 
         try:
-            async with async_playwright() as p:
+            # Check for proxy configuration
+            proxy_server = os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
+            proxy_config = None
+            if proxy_server:
+                proxy_config = {"server": proxy_server}
+                proxy_user = os.environ.get("PROXY_USER")
+                proxy_pass = os.environ.get("PROXY_PASS")
+                if proxy_user and proxy_pass:
+                    proxy_config["username"] = proxy_user
+                    proxy_config["password"] = proxy_pass
+
+            async with Stealth().use_async(async_playwright()) as p:
                 browser = await p.chromium.launch(headless=True)
-                context = await browser.new_context()
+                
+                context_args = {}
+                if proxy_config:
+                    context_args["proxy"] = proxy_config
+                context = await browser.new_context(**context_args)
+                
                 page = await context.new_page()
 
                 # Load saved AuthConfig if exists to restore session
@@ -59,28 +81,32 @@ class CrawlerService:
                 auth_cfg = self.db.query(AuthConfig).filter(AuthConfig.project_id == self.project_id).first()
                 if auth_cfg:
                     try:
-                        details = json.loads(auth_cfg.details)
+                        try:
+                            details = json.loads(decrypt_data(auth_cfg.details))
+                        except Exception:
+                            # Fallback if saved as plain text previously
+                            details = json.loads(auth_cfg.details)
                         session_ind = details.get("session_indicators", {})
-                        
+
                         # Restore cookies
                         cookies = session_ind.get("cookies", [])
                         if cookies:
                             await context.add_cookies(cookies)
                             print("[Crawler] Restored cookies from saved session config.")
-                            
+
                         # Restore localStorage and sessionStorage
                         # Storage must be added after navigating to the root domain.
                         await page.goto(self.root_url)
                         ls = session_ind.get("localStorage", {})
                         ss = session_ind.get("sessionStorage", {})
-                        
+
                         if ls:
-                            await page.evaluate(f"ls => {{ for (let k in ls) {{ localStorage.setItem(k, ls[k]); }} }}", ls)
+                            await page.evaluate("ls => { for (let k in ls) { localStorage.setItem(k, ls[k]); } }", ls)
                             print("[Crawler] Restored localStorage context.")
                         if ss:
-                            await page.evaluate(f"ss => {{ for (let k in ss) {{ sessionStorage.setItem(k, ss[k]); }} }}", ss)
+                            await page.evaluate("ss => { for (let k in ss) { sessionStorage.setItem(k, ss[k]); } }", ss)
                             print("[Crawler] Restored sessionStorage context.")
-                            
+
                     except Exception as e:
                         print(f"[Crawler] Error restoring session on startup: {e}")
 
@@ -95,16 +121,16 @@ class CrawlerService:
                     current_base = current_url.split("?")[0].split("#")[0]
                     if current_base in self.visited_urls:
                         continue
-                    
+
                     print(f"[Crawler] Attempting to visit: {current_url}")
 
                     try:
                         # Visit page
                         await page.goto(current_url, wait_until="networkidle")
-                        
+
                         actual_url = page.url
                         actual_base = actual_url.split("?")[0].split("#")[0]
-                        
+
                         # Handle authentication redirects dynamically
                         if actual_base != current_base:
                             print(f"[Crawler] Redirected from {current_base} to {actual_base}")
@@ -125,7 +151,7 @@ class CrawlerService:
 
                         normalized_path = self.normalize_path(target_url_for_db)
                         title = await page.title()
-                        
+
                         db_page = Page(
                             crawl_id=self.crawl_id,
                             url=target_url_for_db,
@@ -146,7 +172,7 @@ class CrawlerService:
                             add_to_cart_selector = "#add-to-cart-btn"
                             if await page.locator(add_to_cart_selector).count() > 0:
                                 print(f"[Crawler] Clicking {add_to_cart_selector} on {target_url_for_db} to capture background API calls...")
-                                
+
                                 # Gather context inputs (attributes of the button + URL segments)
                                 parsed_url = urlparse(target_url_for_db)
                                 path_segs = [s for s in parsed_url.path.split("/") if s]
@@ -155,13 +181,13 @@ class CrawlerService:
                                     context_inputs[f"url_seg_{idx}"] = seg
                                     if seg.isdigit() or len(seg) > 5:
                                         context_inputs["url_id"] = seg
-                                
+
                                 try:
                                     btn_attrs = await page.locator(add_to_cart_selector).evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
                                     context_inputs.update(btn_attrs)
                                 except Exception:
                                     pass
-                                
+
                                 api_disco.start_recording("add_to_cart", context_inputs)
                                 await page.click(add_to_cart_selector)
                                 await page.wait_for_load_state("networkidle")
@@ -215,11 +241,11 @@ class CrawlerService:
                 await api_disco.save_discovered_apis(self.db, self.crawl_id)
 
                 await browser.close()
-                
+
             crawl_obj.status = "completed"
             self.db.commit()
             print("[Crawler] Crawl pipeline successfully finished.")
-            
+
         except Exception as e:
             print(f"[Crawler] Fatal crawler exception: {e}")
             if crawl_obj:

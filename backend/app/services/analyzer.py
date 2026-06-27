@@ -1,8 +1,10 @@
 import json
-from bs4 import BeautifulSoup
+
 from playwright.async_api import Page as PlaywrightPage
 from sqlalchemy.orm import Session
+
 from ..models.db_models import Element
+
 
 class DOMAnalyzerService:
     def __init__(self, db: Session, page_id: str):
@@ -10,77 +12,99 @@ class DOMAnalyzerService:
         self.page_id = page_id
 
     async def analyze(self, page: PlaywrightPage) -> list:
-        # Extract interactive elements using Playwright selector queries
+        # Extract interactive elements from all frames (including nested iframes)
         elements_data = []
+        
+        for frame in page.frames:
+            # Check if frame is main page or sub-iframe
+            frame_selector = ""
+            if frame != page.main_frame:
+                try:
+                    frame_element = await frame.frame_element()
+                    frame_selector = await self.generate_selector(frame_element)
+                except Exception:
+                    frame_selector = "iframe"
 
-        # Find buttons
-        buttons = await page.locator("button, input[type='submit'], a.btn, a.button").all()
-        for btn in buttons:
+            # Find buttons in this frame
             try:
-                tag = await btn.evaluate("el => el.tagName.toLowerCase()")
-                text = await btn.inner_text()
-                text = text.strip() if text else ""
-                
-                # Selector generation
-                selector = await self.generate_selector(btn)
-                
-                # Attributes extraction
-                attrs = await btn.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
-                
-                elements_data.append({
-                    "tag_name": tag,
-                    "selector": selector,
-                    "text_content": text,
-                    "element_type": "button",
-                    "attributes": attrs,
-                    "outer_html": await btn.evaluate("el => el.outerHTML")
-                })
-            except Exception as e:
-                print(f"Error analyzing button: {e}")
+                buttons = await frame.locator("button, input[type='submit'], a.btn, a.button").all()
+                for btn in buttons:
+                    try:
+                        tag = await btn.evaluate("el => el.tagName.toLowerCase()")
+                        text = await btn.inner_text()
+                        text = text.strip() if text else ""
+                        selector = await self.generate_selector(btn)
+                        attrs = await btn.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
+                        
+                        if frame_selector:
+                            attrs["frame_selector"] = frame_selector
 
-        # Find inputs
-        inputs = await page.locator("input, textarea, select").all()
-        for inp in inputs:
-            try:
-                tag = await inp.evaluate("el => el.tagName.toLowerCase()")
-                inp_type = await inp.get_attribute("type") or "text"
-                
-                if inp_type in ["submit", "button", "hidden"]:
-                    # Skip buttons already captured or hidden fields
-                    continue
-                    
-                placeholder = await inp.get_attribute("placeholder") or ""
-                name = await inp.get_attribute("name") or ""
-                selector = await self.generate_selector(inp)
-                attrs = await inp.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
-                
-                elements_data.append({
-                    "tag_name": tag,
-                    "selector": selector,
-                    "text_content": placeholder or name,
-                    "element_type": "input",
-                    "attributes": attrs,
-                    "outer_html": await inp.evaluate("el => el.outerHTML")
-                })
+                        elements_data.append({
+                            "tag_name": tag,
+                            "selector": selector,
+                            "text_content": text,
+                            "element_type": "button",
+                            "attributes": attrs,
+                            "outer_html": await btn.evaluate("el => el.outerHTML")
+                        })
+                    except Exception as e:
+                        print(f"Error analyzing button in frame: {e}")
             except Exception as e:
-                print(f"Error analyzing input: {e}")
+                print(f"Error locating buttons in frame: {e}")
 
-        # Find forms
-        forms = await page.locator("form").all()
-        for form in forms:
+            # Find inputs in this frame
             try:
-                selector = await self.generate_selector(form)
-                attrs = await form.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
-                elements_data.append({
-                    "tag_name": "form",
-                    "selector": selector,
-                    "text_content": await form.get_attribute("id") or "form",
-                    "element_type": "form",
-                    "attributes": attrs,
-                    "outer_html": await form.evaluate("el => el.outerHTML")
-                })
+                inputs = await frame.locator("input, textarea, select").all()
+                for inp in inputs:
+                    try:
+                        tag = await inp.evaluate("el => el.tagName.toLowerCase()")
+                        inp_type = await inp.get_attribute("type") or "text"
+                        if inp_type in ["submit", "button", "hidden"]:
+                            continue
+                        placeholder = await inp.get_attribute("placeholder") or ""
+                        name = await inp.get_attribute("name") or ""
+                        selector = await self.generate_selector(inp)
+                        attrs = await inp.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
+                        
+                        if frame_selector:
+                            attrs["frame_selector"] = frame_selector
+
+                        elements_data.append({
+                            "tag_name": tag,
+                            "selector": selector,
+                            "text_content": placeholder or name,
+                            "element_type": "input",
+                            "attributes": attrs,
+                            "outer_html": await inp.evaluate("el => el.outerHTML")
+                        })
+                    except Exception as e:
+                        print(f"Error analyzing input in frame: {e}")
             except Exception as e:
-                print(f"Error analyzing form: {e}")
+                print(f"Error locating inputs in frame: {e}")
+
+            # Find forms in this frame
+            try:
+                forms = await frame.locator("form").all()
+                for form in forms:
+                    try:
+                        selector = await self.generate_selector(form)
+                        attrs = await form.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
+                        
+                        if frame_selector:
+                            attrs["frame_selector"] = frame_selector
+
+                        elements_data.append({
+                            "tag_name": "form",
+                            "selector": selector,
+                            "text_content": await form.get_attribute("id") or "form",
+                            "element_type": "form",
+                            "attributes": attrs,
+                            "outer_html": await form.evaluate("el => el.outerHTML")
+                        })
+                    except Exception as e:
+                        print(f"Error analyzing form in frame: {e}")
+            except Exception as e:
+                print(f"Error locating forms in frame: {e}")
 
         # Save to DB
         db_elements = []
@@ -96,7 +120,7 @@ class DOMAnalyzerService:
             )
             self.db.add(db_el)
             db_elements.append(db_el)
-            
+
         self.db.commit()
         return db_elements
 

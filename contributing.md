@@ -1,19 +1,30 @@
-# 🤝 Contributing to Shiny Fishstick
+# Contributing to Shiny Fishstick
 
-Thank you for choosing to contribute to Shiny Fishstick! We want to make contributing to this project as easy and transparent as possible.
+First off, thank you for checking out Shiny Fishstick! We are excited to build the navigation layer for AI browser agents with you.
+
+This document outlines the guidelines and steps to start contributing to this repository.
 
 ---
 
-## 🛠️ Development Setup
+## 🛠️ Local Environment Setup
 
-1. **Fork the Repository** and clone your fork locally:
+You can set up your development environment locally on your host machine or run the containerized stack.
+
+### Option A: Local Machine Setup
+
+#### Prerequisites
+- **Python**: 3.9 or higher
+- **Node.js**: 18.x or higher
+- **Browser Dependencies**: Playwright Chromium driver
+
+#### Setup Steps
+1. **Clone the repository**:
    ```bash
-   git clone git@github.com:your-username/shiny-fishstick.git
+   git clone https://github.com/Hootsworth/shiny-fishstick.git
    cd shiny-fishstick
    ```
 
-2. **Backend Setup**:
-   Initialize the Python virtual environment and install dependencies:
+2. **Setup the Backend**:
    ```bash
    python3 -m venv backend/venv
    source backend/venv/bin/activate
@@ -21,62 +32,66 @@ Thank you for choosing to contribute to Shiny Fishstick! We want to make contrib
    playwright install chromium
    ```
 
-3. **Frontend Setup**:
-   Install Node modules inside the frontend folder:
+3. **Setup the Frontend**:
    ```bash
    cd frontend
    npm install
    cd ..
    ```
 
+4. **Run the Verification Pipeline**:
+   Ensure everything works by compiling the specs and executing tests against the mock sandbox:
+   ```bash
+   python test_pipeline.py
+   ```
+
+5. **Run the local dev servers**:
+   - Backend compiler: `python -m uvicorn backend.app.main:app --port 8000 --reload`
+   - Target site sandbox: `python -m uvicorn backend.mock_site.main:app --port 8001`
+   - Next.js Dashboard: `cd frontend && npm run dev`
+
 ---
 
-## 🧪 Testing Guidelines
+### Option B: Docker Compose Setup
 
-Before submitting any code changes, you **must** run the E2E verification test pipeline to ensure that all crawler, discovery, intent, and generator services are fully functional.
+If you have Docker and Docker Compose installed, you can spin up the entire stack with a single command:
 
-Run the test suite:
 ```bash
-backend/venv/bin/python test_pipeline.py
+docker compose up --build
 ```
 
-### Writing New Tests
-- If you add a new compiler component, add a verification step inside `test_pipeline.py` or create a unit test under `backend/tests/`.
-- Ensure that you test mock sandbox interactions to verify Playwright navigation reliability.
+This will run:
+- Backend compiler at **[http://localhost:8000](http://localhost:8000)**
+- Next.js Frontend Dashboard at **[http://localhost:3000](http://localhost:3000)**
+- Mock Sandbox Store at **[http://localhost:8001](http://localhost:8001)**
 
 ---
 
-## 🎨 Coding Style & Best Practices
+## 💅 Coding Standards & Pre-commit Hooks
 
-### Python (Backend)
-- Follow **PEP 8** style guidelines.
-- Use type hints wherever possible to make compilation boundaries readable.
-- Keep FastAPI path routing logic separate from service managers: route handling lives in `backend/app/main.py` while compiler logic lives in `backend/app/services/`.
+We use **Ruff** for Python formatting/linting and **Prettier** for JS/TS/CSS/Markdown files.
 
-### TypeScript / Next.js (Frontend)
-- Adhere to functional React components using hooks.
-- Styling must use vanilla Tailwind CSS classes with absolute layout responsive design.
-- Always provide fallback states for client interface views when the backend server is offline.
+1. **Install pre-commit**:
+   ```bash
+   pip install pre-commit
+   pre-commit install
+   ```
+
+2. **Run checks manually**:
+   ```bash
+   pre-commit run --all-files
+   ```
+
+All PRs must pass the linting checks and E2E pipeline test suites in GitHub Actions before they can be merged.
 
 ---
 
-## 📥 Submission Process
+## 📥 Pull Request Guidelines
 
-1. **Create a Branch**: Create a feature branch off of the `main` branch.
-   ```bash
-   git checkout -b feature/my-amazing-feature
-   ```
-2. **Commit Your Changes**: Keep commit messages descriptive and clear:
-   ```bash
-   git commit -m "feat: add support for dynamic form schema nested variables"
-   ```
-3. **Verify Everything**: Confirm that `test_pipeline.py` executes successfully and Next.js builds properly (`npm run build`).
-4. **Push and PR**: Push your branch and open a Pull Request to the upstream repository.
-   ```bash
-   git push -u origin feature/my-amazing-feature
-   ```
-
----
-
-## 📄 Code of Conduct
-We are committed to fostering a welcoming, supportive, and harassment-free community. Please be respectful and collaborative when interacting on issues and pull requests.
+1. **Branch Naming**:
+   - Use descriptive names: `feature/your-feature-name` or `bugfix/issue-id`.
+2. **Commit Messages**:
+   - Make commits clean, atomic, and descriptive.
+3. **Submit the PR**:
+   - Link any open issues that the PR closes.
+   - Describe what changed and include screenshots or logs if verifying UI behavior.

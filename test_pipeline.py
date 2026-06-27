@@ -1,28 +1,30 @@
 import os
+import subprocess
 import sys
 import time
-import subprocess
+
 import requests
-from sqlalchemy.orm import Session
 
 # Add workspace to path
-sys.path.append("/Users/adityadixit/Documents/Code/Preflight Designer")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
 
-from backend.app.core.database import SessionLocal, engine, Base
-from backend.app.models.db_models import Project, Crawl, Action, Workflow
+from backend.app.core.database import Base, SessionLocal, engine
+from backend.app.models.db_models import Action, Crawl, Project, Workflow
 from backend.app.services.crawler import CrawlerService
-from backend.app.services.workflow import WorkflowDiscoveryService
 from backend.app.services.generator import SDKGeneratorService
+from backend.app.services.workflow import WorkflowDiscoveryService
+
 
 def main():
     # 1. Start Mock Store on port 8001
     print("Starting Mock E-Commerce Store on port 8001...")
     mock_proc = subprocess.Popen(
-        ["/Users/adityadixit/Documents/Code/Preflight Designer/backend/venv/bin/python", "-m", "uvicorn", "backend.mock_site.main:app", "--port", "8001"],
+        [sys.executable, "-m", "uvicorn", "backend.mock_site.main:app", "--port", "8001"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    
+
     # Wait for mock store to boot
     time.sleep(3)
     try:
@@ -37,9 +39,9 @@ def main():
     # 2. Setup SQLite tables
     print("Initializing Database tables...")
     Base.metadata.create_all(bind=engine)
-    
+
     db = SessionLocal()
-    
+
     # Clean previous runs
     db.query(Action).delete()
     db.query(Workflow).delete()
@@ -54,7 +56,7 @@ def main():
     db.commit()
     db.refresh(project)
     project_id = project.id
-    
+
     # Create Crawl record
     crawl = Crawl(project_id=project_id, status="pending")
     db.add(crawl)
@@ -88,53 +90,53 @@ def main():
 
     # Close DB session
     db.close()
-    
+
     print("\n--- Spec compilation complete! ---")
-    
+
     # Read generated yaml
-    yaml_path = "/Users/adityadixit/Documents/Code/Preflight Designer/shared/specs/preflight.yaml"
+    yaml_path = os.path.join(BASE_DIR, "shared/specs/preflight.yaml")
     if os.path.exists(yaml_path):
         print(f"YAML Spec generated successfully at: {yaml_path}")
         with open(yaml_path, "r") as f:
             print(f.read())
-            
+
     # 7. Execute generated Python SDK!
     print("Executing integration verification using generated Python SDK...")
-    sdk_path = "/Users/adityadixit/Documents/Code/Preflight Designer/shared/specs/sdk.py"
+    sdk_path = os.path.join(BASE_DIR, "shared/specs/sdk.py")
     if not os.path.exists(sdk_path):
         print("Error: SDK file was not created!")
         mock_proc.terminate()
         sys.exit(1)
-        
+
     # Append shared/specs to path so we can import the generated SDK
-    sys.path.append("/Users/adityadixit/Documents/Code/Preflight Designer/shared/specs")
-    
+    sys.path.append(os.path.join(BASE_DIR, "shared/specs"))
+
     try:
         from sdk import ShinyFishstickSiteSDK
-        
+
         # Instantiate generated SDK
         sdk = ShinyFishstickSiteSDK("http://localhost:8001")
         print("Launching Playwright via generated SDK...")
         sdk.start(headless=True)
-        
+
         print("Executing: sdk.login('admin@example.com', 'password123')...")
         sdk.login("admin@example.com", "password123")
-        
+
         print("Executing: sdk.search_products('Quantum')...")
         sdk.search_products("Quantum")
-        
+
         print("Executing: sdk.add_to_cart('2')...")
         res_cart = sdk.add_to_cart("2")
         print(f"Cart response: {res_cart}")
-        
+
         print("Executing: sdk.checkout()...")
         sdk.checkout()
-        
+
         print("Closing SDK session...")
         sdk.close()
-        
+
         print("\n🏆 VERIFICATION SUCCESSFUL! The generated SDK executed the workflow successfully!")
-        
+
     except Exception as e:
         print(f"Error executing generated SDK: {e}")
         import traceback

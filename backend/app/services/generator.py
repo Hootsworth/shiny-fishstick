@@ -1,8 +1,11 @@
-import os
-import yaml
 import json
+import os
+
+import yaml
 from sqlalchemy.orm import Session
+
 from ..models.db_models import Action, Project, SpecVersion, Workflow
+
 
 class SDKGeneratorService:
     def __init__(self, db: Session, project_id: str):
@@ -15,14 +18,14 @@ class SDKGeneratorService:
             raise ValueError("Project not found")
 
         actions = self.db.query(Action).filter(Action.project_id == self.project_id).all()
-        
+
         # 1. Generate YAML Spec
         spec_dict = {
             "version": "1.0.0",
             "site": project.root_url,
             "actions": {}
         }
-        
+
         for act in actions:
             params = json.loads(act.parameters or "[]")
             param_list = []
@@ -33,7 +36,7 @@ class SDKGeneratorService:
                     "required": p.get("required", True),
                     "selector": p.get("selector", "")
                 })
-            
+
             action_spec = {
                 "description": act.description,
                 "action_type": act.action_type,
@@ -48,7 +51,7 @@ class SDKGeneratorService:
             spec_dict["actions"][act.name] = action_spec
 
         yaml_content = yaml.dump(spec_dict, sort_keys=False)
-        
+
         # Save to DB SpecVersions
         spec_ver = SpecVersion(
             project_id=self.project_id,
@@ -60,10 +63,10 @@ class SDKGeneratorService:
 
         # 2. Generate Python SDK
         python_sdk = self.generate_python_sdk(project.root_url, actions)
-        
+
         # 3. Generate TypeScript SDK
         typescript_sdk = self.generate_typescript_sdk(project.root_url, actions)
-        
+
         # 4. Generate JSON Tools Schema (for agents)
         tools_schema = self.generate_tools_schema(actions)
 
@@ -75,9 +78,11 @@ class SDKGeneratorService:
         sdk_tests = self.generate_sdk_tests(project.root_url, workflows)
 
         # Write to files locally for easy access/download
-        specs_dir = "/Users/adityadixit/Documents/Code/Preflight Designer/shared/specs"
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, "../../../"))
+        specs_dir = os.path.join(project_root, "shared/specs")
         os.makedirs(specs_dir, exist_ok=True)
-        
+
         with open(os.path.join(specs_dir, "preflight.yaml"), "w") as f:
             f.write(yaml_content)
         with open(os.path.join(specs_dir, "sdk.py"), "w") as f:
@@ -104,19 +109,21 @@ class SDKGeneratorService:
         methods_code = ""
         for act in actions:
             params = json.loads(act.parameters or "[]")
-            
+
             # Formulate arguments signature
             arg_sig = "self"
             for p in params:
+                if p["name"] == "_frame_selector":
+                    continue
                 if p.get("source", "").startswith("header."):
                     arg_sig += f", {p['name']}=None"
                 else:
                     arg_sig += f", {p['name']}"
                     if p["name"] == "quantity":
                         arg_sig += "=1" # default quantity helper
-            
+
             docstring = f'        """{act.description}"""'
-            
+
             body_code = ""
             if act.action_type == "api":
                 # Direct HTTP execution mapping
@@ -124,7 +131,7 @@ class SDKGeneratorService:
                 query_items = []
                 header_items = []
                 resolve_headers_code = ""
-                
+
                 for p in params:
                     src = p.get("source", "")
                     p_name = p["name"]
@@ -153,11 +160,11 @@ class SDKGeneratorService:
             if cookie_val:
                 {p_name} = "Bearer " + cookie_val if not cookie_val.startswith("Bearer ") else cookie_val"""
                         header_items.append(f'        "{header_key}": {p_name}')
-                
+
                 payload_code = "payload = {\n" + ",\n".join(body_items) + "\n    }" if body_items else "payload = {}"
                 query_code = "query_params = {\n" + ",\n".join(query_items) + "\n    }" if query_items else "query_params = {}"
                 header_code = "headers = {\n" + ",\n".join(header_items) + "\n    }" if header_items else "headers = {}"
-                
+
                 json_arg = ", json=payload" if body_items else ""
                 params_arg = ", params=query_params" if query_items else ""
 
@@ -180,29 +187,41 @@ class SDKGeneratorService:
         return res.json()"""
             else:
                 # Browser click/type actions
+                frame_selector = ""
+                for p in params:
+                    if p.get("name") == "_frame_selector":
+                        frame_selector = p.get("selector", "")
+                        break
+                    elif p.get("frame_selector"):
+                        frame_selector = p.get("frame_selector", "")
+                        break
+
+                target_expr = f'self.page.frame_locator("{frame_selector}")' if frame_selector else 'self.page'
                 fill_actions = ""
                 for p in params:
-                    fill_actions += f'\n        self.page.fill("{p["selector"]}", str({p["name"]}))'
-                
+                    if p["name"] == "_frame_selector":
+                        continue
+                    fill_actions += f'\n        {target_expr}.fill("{p["selector"]}", str({p["name"]}))'
+
                 # Custom trigger clicking depending on action
                 trigger_click = ""
                 if act.name == "login":
-                    trigger_click = '\n        self.page.click("#login-submit-btn")'
+                    trigger_click = f'\n        {target_expr}.click("#login-submit-btn")'
                 elif act.name == "search_products":
-                    trigger_click = '\n        self.page.click("#search-submit-btn")'
+                    trigger_click = f'\n        {target_expr}.click("#search-submit-btn")'
                 elif act.name == "checkout":
-                    trigger_click = '\n        self.page.click("#checkout-submit-btn")'
+                    trigger_click = f'\n        {target_expr}.click("#checkout-submit-btn")'
                 else:
-                    trigger_click = f'\n        self.page.click("{act.selector}")'
+                    trigger_click = f'\n        {target_expr}.click("{act.selector}")'
 
                 # Navigation targets
                 nav_target = ""
                 if act.name == "login":
-                    nav_target = f'\n        self.page.goto(self.root_url + "/login")'
+                    nav_target = '\n        self.page.goto(self.root_url + "/login")'
                 elif act.name == "search_products":
-                    nav_target = f'\n        self.page.goto(self.root_url + "/catalog")'
+                    nav_target = '\n        self.page.goto(self.root_url + "/catalog")'
                 elif act.name == "checkout":
-                    nav_target = f'\n        self.page.goto(self.root_url + "/checkout")'
+                    nav_target = '\n        self.page.goto(self.root_url + "/checkout")'
 
                 body_code = f"""{nav_target}{fill_actions}{trigger_click}
         self.page.wait_for_load_state("networkidle")
@@ -287,10 +306,12 @@ class ShinyFishstickSiteSDK:
         methods_code = ""
         for act in actions:
             params = json.loads(act.parameters or "[]")
-            
+
             # Formulate parameters signature
             arg_sig = ""
             for p in params:
+                if p["name"] == "_frame_selector":
+                    continue
                 type_map = "string" if p["type"] == "string" else "number"
                 if p.get("source", "").startswith("header."):
                     arg_sig += f"{p['name']}?: {type_map}, "
@@ -304,7 +325,7 @@ class ShinyFishstickSiteSDK:
                 query_items = []
                 header_items = []
                 resolve_headers_code = ""
-                
+
                 for p in params:
                     src = p.get("source", "")
                     p_name = p["name"]
@@ -378,27 +399,39 @@ class ShinyFishstickSiteSDK:
         }});
         return response.json();"""
             else:
+                frame_selector = ""
+                for p in params:
+                    if p.get("name") == "_frame_selector":
+                        frame_selector = p.get("selector", "")
+                        break
+                    elif p.get("frame_selector"):
+                        frame_selector = p.get("frame_selector", "")
+                        break
+
+                target_expr = f'this.page.frameLocator("{frame_selector}")' if frame_selector else 'this.page'
                 fill_actions = ""
                 for p in params:
-                    fill_actions += f'\n        await this.page.fill("{p["selector"]}", String({p["name"]}));'
-                
+                    if p["name"] == "_frame_selector":
+                        continue
+                    fill_actions += f'\n        await {target_expr}.fill("{p["selector"]}", String({p["name"]}));'
+
                 trigger_click = ""
                 if act.name == "login":
-                    trigger_click = '\n        await this.page.click("#login-submit-btn");'
+                    trigger_click = f'\n        await {target_expr}.click("#login-submit-btn");'
                 elif act.name == "search_products":
-                    trigger_click = '\n        await this.page.click("#search-submit-btn");'
+                    trigger_click = f'\n        await {target_expr}.click("#search-submit-btn");'
                 elif act.name == "checkout":
-                    trigger_click = '\n        await this.page.click("#checkout-submit-btn");'
+                    trigger_click = f'\n        await {target_expr}.click("#checkout-submit-btn");'
                 else:
-                    trigger_click = f'\n        await this.page.click("{act.selector}");'
+                    trigger_click = f'\n        await {target_expr}.click("{act.selector}");'
 
                 nav_target = ""
                 if act.name == "login":
-                    nav_target = f'\n        await this.page.goto(`${{this.rootUrl}}/login`);'
+                    nav_target = '\n        await this.page.goto(`${this.rootUrl}/login`);'
                 elif act.name == "search_products":
-                    nav_target = f'\n        await this.page.goto(`${{this.rootUrl}}/catalog`);'
+                    nav_target = '\n        await this.page.goto(`${this.rootUrl}/catalog`);'
                 elif act.name == "checkout":
-                    nav_target = f'\n        await this.page.goto(`${{this.rootUrl}}/checkout`);'
+                    nav_target = '\n        await this.page.goto(`${this.rootUrl}/checkout`);'
 
                 body_code = f"""{nav_target}{fill_actions}{trigger_click}
         await this.page.waitForLoadState("networkidle");
@@ -483,7 +516,7 @@ export class ShinyFishstickSiteSDK {{
             params = json.loads(act.parameters or "[]")
             properties = {}
             required = []
-            
+
             for p in params:
                 properties[p["name"]] = {
                     "type": "string" if p["type"] == "string" else "integer",
@@ -491,7 +524,7 @@ export class ShinyFishstickSiteSDK {{
                 }
                 if p.get("required", True):
                     required.append(p["name"])
-                    
+
             tools.append({
                 "type": "function",
                 "function": {
@@ -528,9 +561,9 @@ export class ShinyFishstickSiteSDK {{
                     "required": required
                 }
             })
-        
+
         mcp_tools_json = json.dumps(mcp_tools, indent=4)
-        
+
         template = f"""# Shiny Fishstick Generated Model Context Protocol (MCP) Server
 import sys
 import json
@@ -702,7 +735,7 @@ if __name__ == "__main__":
                     step_code += f"\n            # Step {idx}: checkout\n            print('Executing checkout...', flush=True)\n            sdk.checkout()"
                 else:
                     step_code += f"\n            # Step {idx}: {act_name}\n            print('Executing {act_name}...', flush=True)\n            sdk.{act_name}()"
-            
+
             test_methods += f"""
     def test_{wf.name}(self):
         \"\"\"Test workflow: {wf.description}\"\"\"
@@ -714,7 +747,7 @@ if __name__ == "__main__":
         finally:
             sdk.close()
 """
-        
+
         test_suite_template = f"""# Auto-generated E2E Integration Test Suite
 import unittest
 import sys

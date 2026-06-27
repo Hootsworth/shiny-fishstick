@@ -1,7 +1,11 @@
 import json
+
 from playwright.async_api import Page as PlaywrightPage
 from sqlalchemy.orm import Session
-from ..models.db_models import AuthConfig, Action
+
+from ..models.db_models import AuthConfig
+from ..core.security import encrypt_data
+
 
 class AuthAnalyzerService:
     def __init__(self, db: Session, project_id: str):
@@ -18,12 +22,12 @@ class AuthAnalyzerService:
             # Check if fields are visible
             if await page.locator(email_selector).count() > 0 and await page.locator(password_selector).count() > 0:
                 print(f"[Auth Analyzer] Login fields detected on {url}. Executing authentication flow...")
-                
+
                 # We find the specific visible selectors
                 vis_email = None
                 vis_pwd = None
                 vis_submit = None
-                
+
                 for sel in email_selector.split(", "):
                     if await page.locator(sel).count() > 0:
                         vis_email = sel
@@ -36,38 +40,38 @@ class AuthAnalyzerService:
                     if await page.locator(sel).count() > 0:
                         vis_submit = sel
                         break
-                        
+
                 if not vis_email or not vis_pwd:
                     return False
-                    
+
                 # Fill test credentials
                 await page.fill(vis_email, "admin@example.com")
                 await page.fill(vis_pwd, "password123")
-                
+
                 if api_disco:
                     api_disco.start_recording("login", {"email": "admin@example.com", "password": "password123"})
-                
+
                 # Click submit and wait for navigation
                 if vis_submit:
                     await page.click(vis_submit)
                 else:
                     # Fallback to keypress
                     await page.press(vis_pwd, "Enter")
-                    
+
                 await page.wait_for_load_state("networkidle")
-                
+
                 if api_disco:
                     api_disco.stop_recording()
-                
+
                 # Verify if session cookies or auth tokens are present
                 context = page.context
                 cookies = await context.cookies()
                 session_cookie = next((c for c in cookies if c["name"] == "session"), None)
-                
+
                 # Extract localStorage & sessionStorage
                 local_storage = await page.evaluate("() => JSON.stringify(localStorage)")
                 session_storage = await page.evaluate("() => JSON.stringify(sessionStorage)")
-                
+
                 has_web_storage = False
                 ls_dict = {}
                 ss_dict = {}
@@ -78,10 +82,10 @@ class AuthAnalyzerService:
                         has_web_storage = True
                 except Exception:
                     pass
-                
+
                 if session_cookie or has_web_storage or "/catalog" in page.url:
                     print("[Auth Analyzer] Login successful! Session state captured.")
-                    
+
                     # Save AuthConfig
                     existing = self.db.query(AuthConfig).filter(AuthConfig.project_id == self.project_id).first()
                     details = {
@@ -97,15 +101,15 @@ class AuthAnalyzerService:
                             "redirect_url": page.url
                         }
                     }
-                    
+
                     if existing:
-                        existing.details = json.dumps(details)
+                        existing.details = encrypt_data(json.dumps(details))
                         existing.auth_type = "storage" if has_web_storage else "cookie"
                     else:
                         auth_config = AuthConfig(
                             project_id=self.project_id,
                             auth_type="storage" if has_web_storage else "cookie",
-                            details=json.dumps(details)
+                            details=encrypt_data(json.dumps(details))
                         )
                         self.db.add(auth_config)
                     self.db.commit()
@@ -114,5 +118,5 @@ class AuthAnalyzerService:
                     print("[Auth Analyzer] Login form submitted but session not established.")
         except Exception as e:
             print(f"[Auth Analyzer] Error during auth simulation: {e}")
-            
+
         return False

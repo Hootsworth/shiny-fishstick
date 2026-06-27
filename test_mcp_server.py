@@ -1,10 +1,13 @@
 # Test script for verifying the generated MCP server
-import subprocess
 import json
-import time
 import os
+import subprocess
 import sys
+import time
+
 import requests
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def test_mcp():
     # 1. Check if Mock Store is already running on port 8001
@@ -17,7 +20,7 @@ def test_mcp():
     except Exception:
         print("Starting Mock E-Commerce Store on port 8001...")
         mock_proc = subprocess.Popen(
-            ["/Users/adityadixit/Documents/Code/Preflight Designer/backend/venv/bin/python", "-m", "uvicorn", "backend.mock_site.main:app", "--port", "8001"],
+            [sys.executable, "-m", "uvicorn", "backend.mock_site.main:app", "--port", "8001"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
@@ -34,28 +37,28 @@ def test_mcp():
             sys.exit(1)
 
     print("Starting MCP Server test...")
-    specs_dir = "/Users/adityadixit/Documents/Code/Preflight Designer/shared/specs"
+    specs_dir = os.path.join(BASE_DIR, "shared/specs")
     mcp_script = os.path.join(specs_dir, "mcp_server.py")
-    
+
     if not os.path.exists(mcp_script):
         print(f"Error: {mcp_script} not found! Compile spec first.")
         if mock_proc:
             mock_proc.terminate()
         sys.exit(1)
-        
+
     env = os.environ.copy()
     env["PYTHONPATH"] = specs_dir
-    
+
     # Start the MCP server process using python
     proc = subprocess.Popen(
-        ["/Users/adityadixit/Documents/Code/Preflight Designer/backend/venv/bin/python", mcp_script],
+        [sys.executable, mcp_script],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
         env=env
     )
-    
+
     try:
         # 1. Send initialize request
         print("Sending 'initialize' request...")
@@ -71,11 +74,11 @@ def test_mcp():
         }
         proc.stdin.write(json.dumps(init_req) + "\n")
         proc.stdin.flush()
-        
+
         line = proc.stdout.readline()
         print("Initialize Response:", line)
         assert "result" in json.loads(line), "Initialize response should contain result"
-        
+
         # 2. Send initialized notification
         print("Sending 'notifications/initialized' notification...")
         init_notif = {
@@ -84,9 +87,9 @@ def test_mcp():
         }
         proc.stdin.write(json.dumps(init_notif) + "\n")
         proc.stdin.flush()
-        
+
         time.sleep(1) # wait for initialization
-        
+
         # 3. Send tools/list request
         print("Sending 'tools/list' request...")
         list_req = {
@@ -97,18 +100,18 @@ def test_mcp():
         }
         proc.stdin.write(json.dumps(list_req) + "\n")
         proc.stdin.flush()
-        
+
         line = proc.stdout.readline()
         print("Tools List Response:", line)
         list_data = json.loads(line)
         assert "tools" in list_data["result"], "Tools list response should contain tools list"
-        
+
         # Verify tools are extracted
         tools = list_data["result"]["tools"]
         print(f"Extracted {len(tools)} tools from MCP server:")
         for t in tools:
             print(f"  - Tool name: {t['name']}, description: {t['description']}")
-            
+
         # 4. Call 'login' tool
         print("Sending 'tools/call' request for login tool...")
         call_req = {
@@ -125,12 +128,12 @@ def test_mcp():
         }
         proc.stdin.write(json.dumps(call_req) + "\n")
         proc.stdin.flush()
-        
+
         line = proc.stdout.readline()
         print("Tool Call Response:", line)
         call_data = json.loads(line)
         assert not call_data.get("result", {}).get("isError"), "Tool call should succeed without error"
-        
+
         # 5. Shutdown
         print("Sending 'shutdown' request...")
         shutdown_req = {
@@ -141,12 +144,12 @@ def test_mcp():
         }
         proc.stdin.write(json.dumps(shutdown_req) + "\n")
         proc.stdin.flush()
-        
+
         line = proc.stdout.readline()
         print("Shutdown Response:", line)
-        
+
         print("\n🏆 MCP SERVER TEST SUCCESSFUL! HANDSHAKE, TOOL LISTING, AND CALL VERIFIED!")
-        
+
     except Exception as e:
         print(f"Test failed: {e}")
         # print stderr if available

@@ -1,8 +1,8 @@
-import os
-from fastapi import FastAPI, Form, Request, Response, Cookie
+from typing import Optional
+
+from fastapi import Cookie, FastAPI, Form, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
-from typing import Optional, List
 
 app = FastAPI(title="Mock Store")
 
@@ -119,11 +119,11 @@ def logout(response: Response):
 def catalog(q: Optional[str] = None, session: Optional[str] = Cookie(None), username: Optional[str] = Cookie(None)):
     if not session:
         return RedirectResponse(url="/login")
-    
+
     filtered_products = PRODUCTS
     if q:
         filtered_products = [p for p in PRODUCTS if q.lower() in p["name"].lower() or q.lower() in p["desc"].lower()]
-        
+
     product_cards = ""
     for p in filtered_products:
         product_cards += f"""
@@ -140,7 +140,7 @@ def catalog(q: Optional[str] = None, session: Optional[str] = Cookie(None), user
             </div>
         </div>
         """
-        
+
     if not product_cards:
         product_cards = '<p class="text-gray-500 col-span-3 text-center py-8">No products found.</p>'
 
@@ -169,11 +169,11 @@ def catalog(q: Optional[str] = None, session: Optional[str] = Cookie(None), user
 def product_details(id: str, session: Optional[str] = Cookie(None), username: Optional[str] = Cookie(None)):
     if not session:
         return RedirectResponse(url="/login")
-        
+
     p = next((p for p in PRODUCTS if p["id"] == id), None)
     if not p:
         return HTMLResponse(content=layout("Not Found", "<h1 class='text-2xl font-bold'>Product not found</h1>", username=username))
-        
+
     content = f"""
     <div class="bg-slate-900/60 border border-gray-800 rounded-2xl p-8 max-w-2xl mx-auto flex flex-col md:flex-row gap-8">
         <div class="flex-grow">
@@ -223,7 +223,7 @@ def add_to_cart(item: CartItem, session: Optional[str] = Cookie(None)):
 def checkout_page(session: Optional[str] = Cookie(None), username: Optional[str] = Cookie(None)):
     if not session:
         return RedirectResponse(url="/login")
-        
+
     items_html = ""
     total = 0.0
     for item in CART:
@@ -237,10 +237,10 @@ def checkout_page(session: Optional[str] = Cookie(None), username: Optional[str]
                 <span class="font-semibold">${subtotal:.2f}</span>
             </div>
             """
-            
+
     if not CART:
         items_html = '<p class="text-gray-500 text-center py-4">Your cart is empty.</p>'
-        
+
     content = f"""
     <div class="max-w-md mx-auto bg-slate-900/80 border border-gray-800 p-8 rounded-2xl shadow-xl">
         <h2 class="text-2xl font-bold mb-6 text-center">Checkout Summary</h2>
