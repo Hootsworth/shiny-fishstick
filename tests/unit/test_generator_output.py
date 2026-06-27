@@ -43,3 +43,53 @@ def test_sdk_generation_output():
         db.query(Action).filter(Action.project_id == "proj-999").delete()
         db.commit()
         db.close()
+
+def test_sdk_tests_assertion_compilation():
+    from backend.app.models.db_models import Workflow
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+
+    try:
+        # Create mock action with assertions
+        action = Action(
+            project_id="proj-888",
+            name="checkout",
+            description="Proceed to place the order",
+            intent="checkout",
+            action_type="browser",
+            selector="#checkout-btn",
+            parameters="[]",
+            assertions=json.dumps([
+                {"type": "visible", "selector": "#success-banner"},
+                {"type": "contains_text", "selector": ".order-status", "value": "Placed"},
+                {"type": "url_equals", "value": "http://localhost:8001/success"}
+            ])
+        )
+        db.add(action)
+        db.commit()
+
+        # Create mock workflow
+        wf = Workflow(
+            project_id="proj-888",
+            name="purchase_flow",
+            description="Happy path purchase",
+            steps=json.dumps([
+                {"action": "checkout", "source_page": "/cart", "target_page": "/success"}
+            ])
+        )
+        db.add(wf)
+        db.commit()
+
+        generator = SDKGeneratorService(db, "proj-888")
+        sdk_tests = generator.generate_sdk_tests("http://localhost:8001", [wf])
+
+        # Assert code contains custom unittest assertions mapped to playwright selectors
+        assert "self.assertTrue(sdk.page.locator('#success-banner').is_visible())" in sdk_tests
+        assert "self.assertIn('Placed', sdk.page.locator('.order-status').inner_text())" in sdk_tests
+        assert "self.assertEqual(sdk.page.url, 'http://localhost:8001/success')" in sdk_tests
+
+    finally:
+        db.query(Action).filter(Action.project_id == "proj-888").delete()
+        db.query(Workflow).filter(Workflow.project_id == "proj-888").delete()
+        db.commit()
+        db.close()

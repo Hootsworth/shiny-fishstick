@@ -81,6 +81,7 @@ class Action(Base):
     api_url = Column(String(2048), nullable=True)
     api_method = Column(String(10), nullable=True)
     confidence_score = Column(Float, default=1.0)
+    assertions = Column(Text, nullable=True)  # JSON list of assertion objects
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

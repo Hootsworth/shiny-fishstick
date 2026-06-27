@@ -10,9 +10,12 @@ from backend.app.core.database import Base, engine, get_db
 from backend.app.models.db_models import Action, Crawl, Project, SpecVersion, Workflow
 from backend.app.schemas.pyd_models import (
     ActionResponse,
+    ActionUpdate,
     CrawlResponse,
     ProjectCreate,
     ProjectResponse,
+    WorkflowResponse,
+    WorkflowUpdate,
 )
 from backend.app.services.generator import SDKGeneratorService
 from backend.app.services.updater import SpecUpdaterService
@@ -179,3 +182,43 @@ def readiness_check(db: Session = Depends(get_db)):
         return {"status": "ready", "db": "ok"}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Database connection failed: {e}")
+
+@app.put("/api/workflows/{workflow_id}", response_model=WorkflowResponse)
+def update_workflow(workflow_id: str, payload: WorkflowUpdate, db: Session = Depends(get_db)):
+    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    workflow.name = payload.name
+    workflow.description = payload.description
+
+    steps_list = []
+    for step in payload.steps:
+        steps_list.append({
+            "action": step.action,
+            "source_page": step.source_page,
+            "target_page": step.target_page
+        })
+    workflow.steps = json.dumps(steps_list)
+    db.commit()
+    db.refresh(workflow)
+    return workflow
+
+@app.put("/api/actions/{action_id}", response_model=ActionResponse)
+def update_action(action_id: str, payload: ActionUpdate, db: Session = Depends(get_db)):
+    action = db.query(Action).filter(Action.id == action_id).first()
+    if not action:
+        raise HTTPException(status_code=404, detail="Action not found")
+
+    if payload.description is not None:
+        action.description = payload.description
+    if payload.selector is not None:
+        action.selector = payload.selector
+    if payload.parameters is not None:
+        action.parameters = payload.parameters
+    if payload.assertions is not None:
+        action.assertions = payload.assertions
+
+    db.commit()
+    db.refresh(action)
+    return action

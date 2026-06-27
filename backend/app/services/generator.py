@@ -43,6 +43,11 @@ class SDKGeneratorService:
                 "selector": act.selector,
                 "parameters": param_list
             }
+            if act.assertions:
+                try:
+                    action_spec["assertions"] = json.loads(act.assertions)
+                except Exception:
+                    pass
             if act.action_type == "api":
                 action_spec["api"] = {
                     "url": act.api_url,
@@ -735,6 +740,33 @@ if __name__ == "__main__":
                     step_code += f"\n            # Step {idx}: checkout\n            print('Executing checkout...', flush=True)\n            sdk.checkout()"
                 else:
                     step_code += f"\n            # Step {idx}: {act_name}\n            print('Executing {act_name}...', flush=True)\n            sdk.{act_name}()"
+
+                # Append assertions code if configured
+                action_obj = self.db.query(Action).filter(
+                    Action.project_id == self.project_id,
+                    Action.name == act_name
+                ).first()
+                if action_obj and action_obj.assertions:
+                    try:
+                        assertions_list = json.loads(action_obj.assertions)
+                        for assert_item in assertions_list:
+                            atype = assert_item.get("type")
+                            asel = assert_item.get("selector", "")
+                            aval = assert_item.get("value", "")
+
+                            cleaned_val = aval.replace("'", "\\'")
+                            cleaned_sel = asel.replace("'", "\\'")
+
+                            if atype == "visible":
+                                step_code += f"\n            self.assertTrue(sdk.page.locator('{cleaned_sel}').is_visible())"
+                            elif atype == "not_visible":
+                                step_code += f"\n            self.assertFalse(sdk.page.locator('{cleaned_sel}').is_visible())"
+                            elif atype == "contains_text":
+                                step_code += f"\n            self.assertIn('{cleaned_val}', sdk.page.locator('{cleaned_sel}').inner_text())"
+                            elif atype == "url_equals":
+                                step_code += f"\n            self.assertEqual(sdk.page.url, '{cleaned_val}')"
+                    except Exception:
+                        pass
 
             test_methods += f"""
     def test_{wf.name}(self):

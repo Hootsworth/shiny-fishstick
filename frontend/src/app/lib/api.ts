@@ -18,6 +18,7 @@ export interface Action {
   parameters: string;
   api_url?: string;
   api_method?: string;
+  assertions?: string;
 }
 
 export interface WorkflowStep {
@@ -95,5 +96,25 @@ export async function triggerCrawl(projectId: string): Promise<{ crawl_id: strin
 export async function fetchCrawlStatus(crawlId: string): Promise<{ status: string }> {
   const res = await fetch(`${API_BASE}/crawls/${crawlId}`);
   if (!res.ok) throw new Error("Failed to fetch crawl status");
+  return res.json();
+}
+
+export async function updateWorkflow(workflowId: string, name: string, description: string, steps: WorkflowStep[]): Promise<Workflow> {
+  const res = await fetch(`${API_BASE}/workflows/${workflowId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, description, steps }),
+  });
+  if (!res.ok) throw new Error("Failed to update workflow");
+  return res.json();
+}
+
+export async function updateAction(actionId: string, payload: Partial<Action>): Promise<Action> {
+  const res = await fetch(`${API_BASE}/actions/${actionId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update action");
   return res.json();
 }

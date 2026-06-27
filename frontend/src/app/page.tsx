@@ -243,11 +243,11 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'actions' && (
-            <WorkflowTable actions={actions} />
+            <WorkflowTable actions={actions} onActionsUpdated={loadProjectDetails} />
           )}
 
           {activeTab === 'workflow' && (
-            <WorkflowGraph workflows={workflows} />
+            <WorkflowGraph workflows={workflows} actions={actions} onWorkflowsUpdated={loadProjectDetails} />
           )}
 
           {activeTab === 'api' && (
