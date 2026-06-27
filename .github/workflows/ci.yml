@@ -37,3 +37,18 @@ jobs:
     - name: Run Test Suite with Pytest Coverage
       run: |
         python -m pytest --cov=backend/app --cov-report=term-missing tests/
+
+  verify-docker-builds:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Verify Backend Docker Build
+      run: |
+        docker build -t preflight-backend:latest -f backend/Dockerfile .
+
+    - name: Verify Frontend Docker Build
+      run: |
+        docker build -t preflight-frontend:latest ./frontend
