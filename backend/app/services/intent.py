@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, List, Optional
 
+import aiohttp
 import google.generativeai as genai
 from sqlalchemy.orm import Session
 
@@ -13,14 +14,24 @@ class SemanticIntentService:
     def __init__(self, db: Session, project_id: str):
         self.db = db
         self.project_id = project_id
+        self.ollama_model = settings.OLLAMA_MODEL
+        self.ollama_url = settings.OLLAMA_URL
         self.api_key = settings.GEMINI_API_KEY
-        self.use_llm = bool(self.api_key)
-        if self.use_llm:
+
+        if self.ollama_model:
+            self.llm_provider = "ollama"
+            self.use_llm = True
+        elif self.api_key:
+            self.llm_provider = "gemini"
+            self.use_llm = True
             try:
                 genai.configure(api_key=self.api_key)
             except Exception as e:
                 log.warning("gemini_config_failed", error=str(e))
                 self.use_llm = False
+        else:
+            self.llm_provider = None
+            self.use_llm = False
 
     async def classify_and_save(self, elements: List[Element]) -> List[Action]:
         actions = []
@@ -298,12 +309,29 @@ class SemanticIntentService:
         DO NOT wrap the response in markdown blocks. Return clean JSON.
         """
         try:
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = await model.generate_content_async(prompt)
-            data = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
-            return data
+            if self.llm_provider == "ollama":
+                payload = {
+                    "model": self.ollama_model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "format": "json"
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(f"{self.ollama_url}/api/generate", json=payload) as response:
+                        if response.status == 200:
+                            res_json = await response.json()
+                            response_text = res_json.get("response", "")
+                            data = json.loads(response_text.strip().replace("```json", "").replace("```", ""))
+                            return data
+                        else:
+                            raise RuntimeError(f"Ollama returned status {response.status}")
+            else:
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                response = await model.generate_content_async(prompt)
+                data = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
+                return data
         except Exception as e:
-            log.warning("gemini_form_classification_error", error=str(e))
+            log.warning("form_classification_error", error=str(e))
             attrs = json.loads(form.attributes or "{}")
             return self.classify_form_heuristics(attrs.get("id", ""), form, form_inputs)
 
@@ -328,12 +356,29 @@ class SemanticIntentService:
         DO NOT wrap the response in markdown blocks. Return clean JSON.
         """
         try:
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = await model.generate_content_async(prompt)
-            data = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
-            return data
+            if self.llm_provider == "ollama":
+                payload = {
+                    "model": self.ollama_model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "format": "json"
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(f"{self.ollama_url}/api/generate", json=payload) as response:
+                        if response.status == 200:
+                            res_json = await response.json()
+                            response_text = res_json.get("response", "")
+                            data = json.loads(response_text.strip().replace("```json", "").replace("```", ""))
+                            return data
+                        else:
+                            raise RuntimeError(f"Ollama returned status {response.status}")
+            else:
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                response = await model.generate_content_async(prompt)
+                data = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
+                return data
         except Exception as e:
-            log.warning("gemini_button_classification_error", error=str(e))
+            log.warning("button_classification_error", error=str(e))
             attrs = json.loads(btn.attributes or "{}")
             text = btn.text_content.lower()
             return self.classify_button_heuristics(text, attrs.get("id", ""), btn)

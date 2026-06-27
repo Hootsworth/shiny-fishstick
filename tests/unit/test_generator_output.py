@@ -93,3 +93,37 @@ def test_sdk_tests_assertion_compilation():
         db.query(Workflow).filter(Workflow.project_id == "proj-888").delete()
         db.commit()
         db.close()
+
+def test_rust_sdk_generation_output():
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+
+    try:
+        action = Action(
+            project_id="proj-777",
+            name="checkout",
+            description="Proceed to place the order",
+            intent="checkout",
+            action_type="api",
+            selector="#checkout-btn",
+            api_url="/checkout",
+            api_method="POST",
+            parameters=json.dumps([
+                {"name": "cart_id", "type": "string", "source": "body.cart_id"}
+            ])
+        )
+        db.add(action)
+        db.commit()
+
+        generator = SDKGeneratorService(db, "proj-777")
+        rust_sdk = generator.generate_rust_sdk("http://localhost:8001", [action])
+
+        # Assert correct structures and reqwest/json mapping
+        assert "pub struct ShinyFishstickSiteSDK" in rust_sdk
+        assert "pub fn checkout(&mut self, cart_id: &str)" in rust_sdk
+        assert 'let body = json!({"cart_id": cart_id});' in rust_sdk
+
+    finally:
+        db.query(Action).filter(Action.project_id == "proj-777").delete()
+        db.commit()
+        db.close()

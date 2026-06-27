@@ -72,6 +72,9 @@ class SDKGeneratorService:
         # 3. Generate TypeScript SDK
         typescript_sdk = self.generate_typescript_sdk(project.root_url, actions)
 
+        # 3.5. Generate Rust SDK
+        rust_sdk = self.generate_rust_sdk(project.root_url, actions)
+
         # 4. Generate JSON Tools Schema (for agents)
         tools_schema = self.generate_tools_schema(actions)
 
@@ -94,6 +97,8 @@ class SDKGeneratorService:
             f.write(python_sdk)
         with open(os.path.join(specs_dir, "sdk.ts"), "w") as f:
             f.write(typescript_sdk)
+        with open(os.path.join(specs_dir, "sdk.rs"), "w") as f:
+            f.write(rust_sdk)
         with open(os.path.join(specs_dir, "tools.json"), "w") as f:
             json.dump(tools_schema, f, indent=2)
         with open(os.path.join(specs_dir, "mcp_server.py"), "w") as f:
@@ -105,6 +110,7 @@ class SDKGeneratorService:
             "yaml": yaml_content,
             "python": python_sdk,
             "typescript": typescript_sdk,
+            "rust": rust_sdk,
             "tools": tools_schema,
             "mcp": mcp_server,
             "tests": sdk_tests
@@ -514,6 +520,80 @@ export class ShinyFishstickSiteSDK {{
 }}
 """
         return sdk_template
+
+    def generate_rust_sdk(self, root_url: str, actions: list) -> str:
+        methods_code = ""
+        for act in actions:
+            params = json.loads(act.parameters or "[]")
+
+            # Formulate parameters signature
+            arg_sig = ""
+            for p in params:
+                if p["name"] == "_frame_selector":
+                    continue
+                type_map = "&str" if p["type"] == "string" else "i64"
+                arg_sig += f", {p['name']}: {type_map}"
+
+            body_code = ""
+            if act.action_type == "api":
+                body_items = []
+                for p in params:
+                    src = p.get("source", "")
+                    p_name = p["name"]
+                    if src.startswith("body."):
+                        body_key = src.split("body.")[1]
+                        body_items.append(f'"{body_key}": {p_name}')
+
+                body_json = ", ".join(body_items)
+
+                # Check for strip of leading slash
+                api_route = act.api_url or ""
+                if api_route.startswith("/"):
+                    api_route = api_route[1:]
+                method_url = f'format!("{{}}/{{}}", self.root_url, "{api_route}")'
+
+                body_code = f"""
+        let url = {method_url};
+        let body = json!({{{body_json}}});
+        let mut req = self.client.post(&url);
+        if let Some(ref token) = self.session_token {{
+            req = req.header(AUTHORIZATION, format!("Bearer {{}}", token));
+        }}
+        let res = req.json(&body).send()?;
+        Ok(())"""
+            else:
+                body_code = f"""
+        // Browser Action: {act.name}
+        // Selector: {act.selector}
+        println!("Interacting with element {act.selector}...");
+        Ok(())"""
+
+            methods_code += f"""
+    pub fn {act.name}(&mut self{arg_sig}) -> Result<(), Box<dyn std::error::Error>> {{{body_code}
+    }}"""
+
+        rust_sdk_template = f"""// Auto-generated Rust SDK for Preflight Designer
+use reqwest::header::{{HeaderMap, HeaderValue, AUTHORIZATION}};
+use serde_json::json;
+
+pub struct ShinyFishstickSiteSDK {{
+    root_url: String,
+    client: reqwest::blocking::Client,
+    session_token: Option<String>,
+}}
+
+impl ShinyFishstickSiteSDK {{
+    pub fn new(root_url: &str) -> Self {{
+        Self {{
+            root_url: root_url.to_string(),
+            client: reqwest::blocking::Client::new(),
+            session_token: None,
+        }}
+    }}
+{methods_code}
+}}
+"""
+        return rust_sdk_template
 
     def generate_tools_schema(self, actions: list) -> list:
         tools = []

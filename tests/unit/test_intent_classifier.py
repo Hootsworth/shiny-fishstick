@@ -58,3 +58,69 @@ def test_heuristic_fallback_when_llm_disabled():
         db.query(Action).filter(Action.project_id == "project-123").delete()
         db.commit()
         db.close()
+
+def test_ollama_llm_provider_form_classification(mocker):
+    # Mock settings
+    mocker.patch("backend.app.services.intent.settings.OLLAMA_MODEL", "llama3")
+    mocker.patch("backend.app.services.intent.settings.OLLAMA_URL", "http://localhost:11434")
+
+    # Mock aiohttp client session post context manager
+    mock_response = mocker.Mock()
+    mock_response.status = 200
+
+    async def mock_json():
+        return {
+            "response": json.dumps({
+                "name": "custom_search",
+                "description": "Custom query search",
+                "intent": "search",
+                "selector": "#search-form",
+                "parameters": [
+                    {"name": "query", "type": "string", "selector": "#q", "required": True}
+                ],
+                "action_type": "browser",
+                "confidence_score": 0.95
+            })
+        }
+
+    mock_response.json = mock_json
+
+    mock_post_context = mocker.MagicMock()
+    mock_post_context.__aenter__.return_value = mock_response
+
+    mocker.patch("aiohttp.ClientSession.post", return_value=mock_post_context)
+
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+
+    try:
+        service = SemanticIntentService(db, "proj-555")
+
+        # Verify provider selection
+        assert service.llm_provider == "ollama"
+        assert service.use_llm is True
+
+        form_el = Element(
+            page_id="page-1",
+            tag_name="form",
+            selector="#search-form",
+            element_type="form",
+            attributes="{}",
+            outer_html="<form id='search-form'><input id='q'/></form>"
+        )
+        input_el = Element(
+            page_id="page-1",
+            tag_name="input",
+            selector="#q",
+            element_type="input",
+            attributes='{"name": "query"}',
+            outer_html="<input id='q'/>"
+        )
+
+        res = asyncio.run(service.classify_form_llm(form_el, [input_el]))
+        assert res["name"] == "custom_search"
+        assert res["intent"] == "search"
+        assert len(res["parameters"]) == 1
+
+    finally:
+        db.close()
