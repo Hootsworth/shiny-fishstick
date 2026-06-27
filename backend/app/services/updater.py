@@ -35,7 +35,7 @@ class SpecUpdaterService:
 
                 # 1. Grab all interactive elements on the current page to search for a match
                 buttons = await page.locator("button, input[type='submit'], a.btn, a.button").all()
-                inputs = await page.locator("input, textarea, select").all()
+                await page.locator("input, textarea, select").all()
 
                 healed = False
 

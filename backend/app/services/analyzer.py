@@ -14,7 +14,7 @@ class DOMAnalyzerService:
     async def analyze(self, page: PlaywrightPage) -> list:
         # Extract interactive elements from all frames (including nested iframes)
         elements_data = []
-        
+
         for frame in page.frames:
             # Check if frame is main page or sub-iframe
             frame_selector = ""
@@ -35,7 +35,7 @@ class DOMAnalyzerService:
                         text = text.strip() if text else ""
                         selector = await self.generate_selector(btn)
                         attrs = await btn.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
-                        
+
                         if frame_selector:
                             attrs["frame_selector"] = frame_selector
 
@@ -65,7 +65,7 @@ class DOMAnalyzerService:
                         name = await inp.get_attribute("name") or ""
                         selector = await self.generate_selector(inp)
                         attrs = await inp.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
-                        
+
                         if frame_selector:
                             attrs["frame_selector"] = frame_selector
 
@@ -89,7 +89,7 @@ class DOMAnalyzerService:
                     try:
                         selector = await self.generate_selector(form)
                         attrs = await form.evaluate("el => { const out = {}; for (let attr of el.attributes) { out[attr.name] = attr.value; } return out; }")
-                        
+
                         if frame_selector:
                             attrs["frame_selector"] = frame_selector
 

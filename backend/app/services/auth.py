@@ -3,8 +3,8 @@ import json
 from playwright.async_api import Page as PlaywrightPage
 from sqlalchemy.orm import Session
 
-from ..models.db_models import AuthConfig
 from ..core.security import encrypt_data
+from ..models.db_models import AuthConfig
 
 
 class AuthAnalyzerService:

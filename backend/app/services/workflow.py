@@ -16,7 +16,6 @@ class WorkflowDiscoveryService:
 
         # We search for known action combinations to identify workflows
         # E.g. If we have login, search, add_to_cart, and checkout actions, we construct a Purchase Workflow FSM
-        workflow_steps = []
         action_names = [a.name for a in actions]
 
         # Order actions logically: login -> search -> add_to_cart -> checkout

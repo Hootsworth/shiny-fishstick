@@ -158,7 +158,7 @@ def catalog(q: Optional[str] = None, session: Optional[str] = Cookie(None), user
             </button>
         </form>
     </div>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {product_cards}
     </div>
@@ -181,14 +181,14 @@ def product_details(id: str, session: Optional[str] = Cookie(None), username: Op
             <h1 class="text-3xl font-bold mb-2">{p["name"]}</h1>
             <p class="text-blue-400 text-2xl font-semibold mb-4">${p["price"]:.2f}</p>
             <p class="text-gray-300 mb-6">{p["desc"]}</p>
-            
+
             <button id="add-to-cart-btn" data-product-id="{p["id"]}" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">
                 Add to Cart
             </button>
             <div id="status-msg" class="mt-4 text-green-400 font-medium hidden"></div>
         </div>
     </div>
-    
+
     <script>
         document.getElementById('add-to-cart-btn').addEventListener('click', async function() {{
             const prodId = this.getAttribute('data-product-id');

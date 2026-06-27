@@ -142,7 +142,7 @@ class SemanticIntentService:
                 if inp_attrs.get("frame_selector"):
                     param_dict["frame_selector"] = inp_attrs["frame_selector"]
                 params.append(param_dict)
-            
+
             if frame_selector:
                 params.append({
                     "name": "_frame_selector",
@@ -224,7 +224,7 @@ class SemanticIntentService:
                 if frame_selector:
                     param_dict["frame_selector"] = frame_selector
                 params.append(param_dict)
-            
+
             if frame_selector:
                 params.append({
                     "name": "_frame_selector",
@@ -269,13 +269,13 @@ class SemanticIntentService:
         inputs_desc = [{"selector": i.selector, "outer_html": i.outer_html} for i in form_inputs]
         prompt = f"""
         Analyze this web form and its inputs. Classify the semantic intent (e.g. login, search, checkout).
-        
+
         Form HTML:
         {form.outer_html}
-        
+
         Form Inputs:
         {json.dumps(inputs_desc, indent=2)}
-        
+
         Provide the response in raw JSON format matching this schema:
         {{
             "name": "action_name_snake_case",
@@ -293,7 +293,7 @@ class SemanticIntentService:
             "action_type": "browser",
             "confidence_score": 0.9
         }}
-        
+
         DO NOT wrap the response in markdown blocks. Return clean JSON.
         """
         try:
@@ -309,10 +309,10 @@ class SemanticIntentService:
     async def classify_button_llm(self, btn: Element) -> Optional[Dict[str, Any]]:
         prompt = f"""
         Analyze this button and classify its semantic intent (e.g. add_to_cart, checkout, login).
-        
+
         Button HTML:
         {btn.outer_html}
-        
+
         Provide the response in raw JSON format matching this schema:
         {{
             "name": "action_name_snake_case",
@@ -323,7 +323,7 @@ class SemanticIntentService:
             "action_type": "browser",
             "confidence_score": 0.9
         }}
-        
+
         DO NOT wrap the response in markdown blocks. Return clean JSON.
         """
         try:

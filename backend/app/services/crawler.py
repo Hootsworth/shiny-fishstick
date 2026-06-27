@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import re
 from typing import List, Set
 from urllib.parse import urljoin, urlparse
@@ -68,12 +68,12 @@ class CrawlerService:
 
             async with Stealth().use_async(async_playwright()) as p:
                 browser = await p.chromium.launch(headless=True)
-                
+
                 context_args = {}
                 if proxy_config:
                     context_args["proxy"] = proxy_config
                 context = await browser.new_context(**context_args)
-                
+
                 page = await context.new_page()
 
                 # Load saved AuthConfig if exists to restore session
@@ -143,11 +143,9 @@ class CrawlerService:
                                 # Destination is already visited, meaning this redirect is fully resolved
                                 self.visited_urls.add(current_base)
                             target_url_for_db = actual_url
-                            target_base_for_db = actual_base
                         else:
                             self.visited_urls.add(current_base)
                             target_url_for_db = current_url
-                            target_base_for_db = current_base
 
                         normalized_path = self.normalize_path(target_url_for_db)
                         title = await page.title()
