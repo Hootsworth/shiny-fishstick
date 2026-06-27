@@ -14,7 +14,7 @@ export class ShinyFishstickSiteSDK {
         this.browser = await chromium.launch({ headless });
         this.context = await this.browser.newContext();
         this.page = await this.context.newPage();
-        
+
         if (sessionData) {
             if (sessionData.cookies) {
                 await this.context.addCookies(sessionData.cookies);

@@ -1,12 +1,12 @@
 import json
 from typing import List
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
-from backend.app.core.database import Base, SessionLocal, engine, get_db
+from backend.app.core.database import Base, engine, get_db
 from backend.app.models.db_models import Action, Crawl, Project, SpecVersion, Workflow
 from backend.app.schemas.pyd_models import (
     ActionResponse,
@@ -14,10 +14,8 @@ from backend.app.schemas.pyd_models import (
     ProjectCreate,
     ProjectResponse,
 )
-from backend.app.services.crawler import CrawlerService
 from backend.app.services.generator import SDKGeneratorService
 from backend.app.services.updater import SpecUpdaterService
-from backend.app.services.workflow import WorkflowDiscoveryService
 
 # Initialize database schemas
 Base.metadata.create_all(bind=engine)
@@ -31,35 +29,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Async Background Task for Crawling
-async def run_crawl_task(project_id: str, crawl_id: str, root_url: str):
-    db = SessionLocal()
-    try:
-        # Run Crawl and DOM Analysis
-        crawler = CrawlerService(db, project_id, crawl_id, root_url)
-        await crawler.crawl()
-
-        # Re-open session to refresh SQLAlchemy entity cache
-        db.close()
-        db = SessionLocal()
-
-        # Discover workflows after crawl completes
-        wf_service = WorkflowDiscoveryService(db, project_id)
-        wf_service.discover_and_save()
-
-        # Compile specs and generate SDKs
-        sdk_service = SDKGeneratorService(db, project_id)
-        sdk_service.generate_all()
-    except Exception as e:
-        print(f"[Background Crawl] Error: {e}")
-        crawl_obj = db.query(Crawl).filter(Crawl.id == crawl_id).first()
-        if crawl_obj:
-            crawl_obj.status = "failed"
-            crawl_obj.error_message = str(e)
-            db.commit()
-    finally:
-        db.close()
 
 @app.post("/api/projects", response_model=ProjectResponse)
 def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
@@ -93,8 +62,14 @@ def get_project(project_id: str, db: Session = Depends(get_db)):
         "workflows_count": len(workflows)
     }
 
+# Async Task enqueued to arq worker
 @app.post("/api/projects/{project_id}/crawl")
-def trigger_crawl(project_id: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def trigger_crawl(project_id: str, db: Session = Depends(get_db)):
+    import os
+
+    from arq import create_pool
+    from arq.connections import RedisSettings
+
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -104,7 +79,10 @@ def trigger_crawl(project_id: str, background_tasks: BackgroundTasks, db: Sessio
     db.commit()
     db.refresh(crawl)
 
-    background_tasks.add_task(run_crawl_task, project_id, crawl.id, project.root_url)
+    redis_dsn = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    pool = await create_pool(RedisSettings.from_dsn(redis_dsn))
+    await pool.enqueue_job("crawl_task", project_id, crawl.id, project.root_url)
+
     return {"message": "Crawl triggered", "crawl_id": crawl.id}
 
 @app.get("/api/crawls/{crawl_id}", response_model=CrawlResponse)

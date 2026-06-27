@@ -19,13 +19,13 @@ class ShinyFishstickSiteSDK:
         self.browser = self.playwright.chromium.launch(headless=headless)
         self.context = self.browser.new_context()
         self.page = self.context.new_page()
-        
+
         if session_data:
             cookies = session_data.get("cookies", [])
             if cookies:
                 self.context.add_cookies(cookies)
             self.page.goto(self.root_url)
-            
+
             ls = session_data.get("localStorage", {})
             ss = session_data.get("sessionStorage", {})
             if ls:

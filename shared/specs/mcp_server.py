@@ -82,7 +82,7 @@ def handle_request(req):
     method = req.get("method")
     params = req.get("params", {})
     req_id = req.get("id")
-    
+
     if method == "initialize":
         return {
             "jsonrpc": "2.0",
@@ -98,14 +98,14 @@ def handle_request(req):
                 }
             }
         }
-        
+
     elif method == "notifications/initialized":
         if not sdk_started:
             print("[MCP Server] Starting site SDK...", file=sys.stderr)
             sdk.start(headless=True)
             sdk_started = True
         return None
-        
+
     elif method == "tools/list":
         return {
             "jsonrpc": "2.0",
@@ -114,18 +114,18 @@ def handle_request(req):
                 "tools": TOOLS
             }
         }
-        
+
     elif method == "tools/call":
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
-        
+
         if not sdk_started:
             print("[MCP Server] Auto-starting site SDK...", file=sys.stderr)
             sdk.start(headless=True)
             sdk_started = True
-            
+
         print(f"[MCP Server] Calling tool {tool_name} with arguments {arguments}", file=sys.stderr)
-        
+
         try:
             if not hasattr(sdk, tool_name):
                 return {
@@ -136,16 +136,16 @@ def handle_request(req):
                         "isError": True
                     }
                 }
-                
+
             method_to_call = getattr(sdk, tool_name)
             res = method_to_call(**arguments)
-            
+
             res_text = ""
             if res is not None:
                 res_text = f"Result: {json.dumps(res)}"
             else:
                 res_text = f"Action '{tool_name}' executed successfully."
-                
+
             return {
                 "jsonrpc": "2.0",
                 "id": req_id,
@@ -164,7 +164,7 @@ def handle_request(req):
                     "isError": True
                 }
             }
-            
+
     elif method == "shutdown":
         if sdk_started:
             print("[MCP Server] Closing SDK session...", file=sys.stderr)
@@ -175,10 +175,10 @@ def handle_request(req):
             "id": req_id,
             "result": {}
         }
-        
+
     elif method == "exit":
         sys.exit(0)
-        
+
     else:
         if req_id is not None:
             return {
@@ -203,7 +203,7 @@ def main():
             except Exception as e:
                 print(f"[MCP Server] Invalid JSON: {e}", file=sys.stderr)
                 continue
-                
+
             resp = handle_request(req)
             if resp:
                 sys.stdout.write(json.dumps(resp) + "\n")

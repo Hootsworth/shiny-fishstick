@@ -4,31 +4,36 @@ from cryptography.fernet import Fernet
 
 _fernet_instance = None
 
+import sys
+from pathlib import Path
+
+
 def get_fernet() -> Fernet:
     global _fernet_instance
     if _fernet_instance is not None:
         return _fernet_instance
 
-    key = os.environ.get("SHINY_FISHSTICK_ENCRYPTION_KEY")
-    if key:
-        if isinstance(key, str):
-            key = key.encode("utf-8")
-        _fernet_instance = Fernet(key)
-        return _fernet_instance
-
-    # Fallback to local file
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(current_dir, "../../../"))
-    key_file = os.path.join(project_root, ".encryption.key")
-
-    if os.path.exists(key_file):
-        with open(key_file, "rb") as f:
-            key = f.read().strip()
+    key_str = os.environ.get("SHINY_FISHSTICK_ENCRYPTION_KEY")
+    if key_str:
+        if isinstance(key_str, str):
+            key = key_str.encode("utf-8")
+        else:
+            key = key_str
     else:
-        key = Fernet.generate_key()
-        with open(key_file, "wb") as f:
-            f.write(key)
-        print(f"[Security] Generated new local encryption key and saved to: {key_file}")
+        # Fallback to local file in project root
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, "../../../"))
+        key_path = Path(project_root) / ".encryption.key"
+
+        if key_path.exists():
+            key = key_path.read_bytes().strip()
+        else:
+            if os.getenv("ENV") == "production":
+                print("ERROR: No encryption key in production. Set SHINY_FISHSTICK_ENCRYPTION_KEY.", file=sys.stderr)
+                sys.exit(1)
+            key = Fernet.generate_key()
+            key_path.write_bytes(key)
+            print(f"[Security] Generated new local encryption key and saved to: {key_path}")
 
     _fernet_instance = Fernet(key)
     return _fernet_instance
