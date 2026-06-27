@@ -50,6 +50,10 @@ Instead of expensive DOM scraping, AI agents can now interact with web platforms
 - 🛡️ **API Authentication Token Propagation (Feature C)**: Sniffs headers during crawling, correlates authentication tokens (e.g., Bearer JWTs) fuzzy-wise with their storage source, and automatically propagates them in direct SDK API calls.
 - 🖥️ **Model Context Protocol (MCP) Server (Feature D)**: Auto-generates a standalone JSON-RPC 2.0 stdio MCP server wrapper directly mapping site actions to callable LLM tools.
 - 🧪 **Automated E2E Test Generator (Feature E)**: Auto-compiles a complete Python integration verification suite (`test_sdk.py`) matching the FSM workflow paths discovered by the engine.
+- 🕵️ **Anti-Bot Stealth Evasion**: Integrates `playwright-stealth` to automatically bypass basic bot protection checks (spoofing browser properties, hiding webdriver indicators).
+- 🌐 **Configurable Proxy Routing**: Restores connection-level proxy settings (including user/pass authentication) from environment variables to bypass IP-based rate limiting.
+- 🖼️ **Sub-Frame / Iframe Traversal**: Scans all sub-frames recursively during analysis, saving nested elements and generating dynamic `frame_locator` actions in the generated wrappers.
+- 🔒 **Encrypted Credentials Store**: Encrypts sensitive database session configurations and credentials using `cryptography.fernet` symmetric encryption (auto-provisions local `.encryption.key`).
 
 ---
 
