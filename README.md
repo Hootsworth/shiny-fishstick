@@ -9,7 +9,7 @@
 
 Every AI browser agent begins its journey with a simple goal: *"Buy a pair of red running shoes."* 
 
-But as the agent descends into the raw DOM of modern web applications, the dream quickly turns into a nightmare. It encounters nested shadow DOMs, randomized Tailwind class names (`class="flex items-center justify-between p-4 md:p-6 bg-slate-900/40 border-b border-slate-800/60"`), dynamically injected popups, and complex, redirect-heavy authentication flows. To click a button, the agent must pay a heavy tax in context window size, sending raw screenshots and megabytes of HTML source back and forth to an LLM. And if a developer changes `#btn-add-to-cart` to `#add-to-cart-btn` next Tuesday? The agent crashes.
+But as the agent descends into the raw DOM of modern web applications, the dream quickly turns into a nightmare. It encounters nested shadow DOMs, randomized Tailwind class names (`class="flex items-center justify-between p-4 bg-slate-900"`), dynamically injected popups, and complex, redirect-heavy authentication flows. To click a button, the agent must pay a heavy tax in context window size, sending raw screenshots and megabytes of HTML source back and forth to an LLM. And if a developer changes `#btn-add-to-cart` to `#add-to-cart-btn` next Tuesday? The agent crashes.
 
 **Shiny Fishstick** is the compiler that changes this paradigm. 
 
@@ -18,14 +18,14 @@ Instead of forcing browser agents to navigate raw web pages ad-hoc, Shiny Fishst
 When you run Shiny Fishstick on a target site, it executes a complete discovery pipeline:
 1. **The Crawler** performs a fast, BFS-based traversal, resolving login redirects and session configurations.
 2. **The Analyzer** extracts all forms, interactive elements, and input selectors, generating robust selectors using heuristic scoring.
-3. **The Intent Classifier** categories interactive elements into semantic actions (like `login`, `search_products`, `add_to_cart`, `checkout`).
+3. **The Intent Classifier** categorizes interactive elements into semantic actions (like `login`, `search_products`, `add_to_cart`, `checkout`).
 4. **The API Discovery Engine** intercepts background network requests (XHR/Fetch) and automatically upgrades UI actions into high-speed API requests where possible.
 5. **The Workflow Discovery Engine** models consecutive action transitions as a Finite State Machine (FSM).
 
-The compiler spits out a clean `preflight.yaml` spec and native SDK code (Python/TypeScript):
+The compiler spits out a clean `preflight.yaml` spec and native SDK codes:
 
 ```python
-# The agent's new reality:
+# The agent's new reality (Python):
 site = ShinyFishstickSiteSDK("http://my-shop.com")
 site.start()
 site.login(email="agent@gemini.com", password="secure123")
@@ -46,20 +46,22 @@ Instead of expensive DOM scraping, AI agents can now interact with web platforms
 - 🔌 **XHR Interception & API Upgrades**: Captures background fetches to replace slow browser UI clicks with direct API requests.
 - 📈 **Workflow FSM Discovery**: Automatically discovers sequential dependencies (e.g. `login` -> `search` -> `add_to_cart` -> `checkout`).
 - 🖥️ **Stunning Visual Dashboard**: A beautiful, premium dark-mode Next.js application to monitor crawls, inspect actions, view FSM graphs, and download generated SDKs.
-- 🔑 **Generic Auth & Storage Serialization (Feature A)**: Automatically detects credentials forms using pattern matches and captures complete browser session storage states (`cookies`, `localStorage`, `sessionStorage`) for authenticated runs.
-- 🛡️ **API Authentication Token Propagation (Feature C)**: Sniffs headers during crawling, correlates authentication tokens (e.g., Bearer JWTs) fuzzy-wise with their storage source, and automatically propagates them in direct SDK API calls.
-- 🖥️ **Model Context Protocol (MCP) Server (Feature D)**: Auto-generates a standalone JSON-RPC 2.0 stdio MCP server wrapper directly mapping site actions to callable LLM tools.
-- 🧪 **Automated E2E Test Generator (Feature E)**: Auto-compiles a complete Python integration verification suite (`test_sdk.py`) matching the FSM workflow paths discovered by the engine.
-- 🕵️ **Anti-Bot Stealth Evasion**: Integrates `playwright-stealth` to automatically bypass basic bot protection checks (spoofing browser properties, hiding webdriver indicators).
+- 🔑 **Generic Auth & Storage Serialization**: Automatically detects credentials forms using pattern matches and captures browser session storage states (`cookies`, `localStorage`, `sessionStorage`).
+- 🛡️ **API Authentication Token Propagation**: Sniffs headers during crawling, correlates authentication tokens (e.g., Bearer JWTs) with their storage source, and propagates them in direct SDK API calls.
+- 🖥️ **Model Context Protocol (MCP) Server**: Auto-generates a standalone JSON-RPC 2.0 stdio MCP server wrapper directly mapping site actions to callable LLM tools.
+- 🧪 **Automated E2E Test Generator**: Auto-compiles a complete Playwright integration verification suite (`test_sdk.py`) executing discovered FSM journeys and asserting validation blocks.
+- 🕵️ **Anti-Bot Stealth Evasion**: Integrates `playwright-stealth` to bypass basic bot protection checks (spoofing browser properties, hiding webdriver indicators).
 - 🌐 **Configurable Proxy Routing**: Restores connection-level proxy settings (including user/pass authentication) from environment variables to bypass IP-based rate limiting.
-- 🖼️ **Sub-Frame / Iframe Traversal**: Scans all sub-frames recursively during analysis, saving nested elements and generating dynamic `frame_locator` actions in the generated wrappers.
+- 🖼️ **Sub-Frame / Iframe Traversal**: Scans all sub-frames recursively during analysis, saving nested elements and generating dynamic `frame_locator` actions.
 - 🔒 **Encrypted Credentials Store**: Encrypts sensitive database session configurations and credentials using `cryptography.fernet` symmetric encryption (auto-provisions local `.encryption.key`).
+- 🎨 **Visual FSM Editor (New)**: Drag-and-drop sorting panel allowing developers to reorder workflow transition sequences, customize target page routing, insert/delete step nodes, and commit saves directly back to the database.
+- 📝 **Action Assertions Builder (New)**: Exposes interactive validation configuration on actions directly via the dictionary dashboard. Developers can build custom Playwright verification checks (`visible`, `not_visible`, `contains_text`, `url_equals`) that compile into the E2E test suites.
+- 🦀 **Multi-Language SDKs - Rust (New)**: Compile-ready Rust client SDK (`sdk.rs`) output mapping actions using `reqwest` endpoints, `serde_json` objects, and commented browser actions.
+- 🦙 **Local Offline LLM Support - Ollama (New)**: Route intent classification prompts entirely offline to local inference servers (e.g. Ollama with `llama3`/`mistral`), avoiding any external API key dependencies.
 
 ---
 
 ## 🛠️ The Compilation Pipeline in Depth
-
-Shiny Fishstick works by executing a multi-stage compilation pipeline. Here is exactly what happens during each phase:
 
 ```
 [Target URL] 
@@ -75,30 +77,6 @@ Shiny Fishstick works by executing a multi-stage compilation pipeline. Here is e
 └──────────────┘      └──────────────┘      └──────────────┘      └──────────────┘
 ```
 
-### 1. Crawling & URL Clustering
-The Playwright-powered crawler starts at the seed URL and discovers child links. To prevent state explosion on dynamic paths (like `/product/1`, `/product/2`), the crawler clusters paths. It normalizes path templates into a single logical route, e.g., `/product/{id}`.
-
-### 2. Heuristic DOM Selector Scoring
-The analyzer parses the DOM structure of every discovered page. When it finds interactive elements (inputs, select fields, button controls), it scores possible CSS target selectors:
-- **`data-testid`**: Ranks highest (Score: `1.0`) because it is purpose-built for testing stability.
-- **`id`**: Ranks high (Score: `0.9`) if it is unique.
-- **`name`**: Ranks medium (Score: `0.7`) for form input matching.
-- **`class`**: Ranks low (Score: `0.4`) since CSS styling classes often drift.
-- **`XPath / Tag`**: Used as a fallback of last resort (Score: `0.1`).
-
-### 3. Intent Classification
-Using a hybrid AI engine (Gemini API + regex-based local fallback rules), input parameters are clustered together. If a page has an `<input type="email">`, `<input type="password">`, and a submit button, they are combined into a single logical `login` action containing `email` and `password` variables.
-
-### 4. Background API Upgrades
-While the crawler performs actions (such as clicking the `#add-to-cart-btn`), it monitors network traffic. If the button click triggers a background XHR request (`POST /api/cart/add` carrying JSON keys `product_id` and `quantity`), Shiny Fishstick intercepts this network boundary. It maps the UI action directly to the REST API endpoint, bypassing DOM rendering for faster execution.
-
-### 5. Finite State Machine (FSM) Linking
-By analyzing consecutive step transitions, the system compiles logical user journeys into FSM paths. For example, the `purchase_flow` state machine outlines:
-- **State 1**: `/login` (Action: `login` ➔ Transition to `/catalog`)
-- **State 2**: `/catalog` (Action: `search_products` ➔ Transition to `/catalog`)
-- **State 3**: `/product/{id}` (Action: `add_to_cart` ➔ Transition to `/checkout`)
-- **State 4**: `/checkout` (Action: `checkout` ➔ Transition to order confirmation)
-
 ---
 
 ## 📄 Inside `preflight.yaml`
@@ -109,7 +87,6 @@ The output format is a structured YAML navigation descriptor. Here is a commente
 version: 1.0.0
 site: http://localhost:8001
 actions:
-  # Browser-based Action
   login:
     description: Logs in the user with credentials
     action_type: browser
@@ -123,8 +100,10 @@ actions:
         type: string
         required: true
         selector: '#password'
+    assertions:
+      - type: visible
+        selector: '#success-banner'
 
-  # Direct API-upgraded Action
   add_to_cart:
     description: Adds the current product to the shopping cart
     action_type: api
@@ -150,10 +129,9 @@ actions:
 The Next.js frontend provides a comprehensive suite of developer workspace pages:
 1. **Projects Manager**: Create projects and track high-level statistics (discovered actions, api upgrades, and spec validity score).
 2. **Crawl & Log Feed**: Watch real-time logs stream in from the active Playwright web scraper.
-3. **Action Explorer**: Review classified browser and API actions, view generated CSS target anchors, and inspect parameter schemas.
-4. **FSM Visualizer**: Interactive workflow diagrams representing sequential state transitions.
-5. **API Router**: Lists network intercepts and mapping schemas.
-6. **SDK Download Center**: Copy and download compiled Python SDK, TypeScript SDK, or standard YAML specifications.
+3. **Action Explorer**: Review classified actions, update CSS selectors, and add/remove **Playwright Assertions**.
+4. **FSM Visualizer**: Edit workflow diagrams representing sequential state transitions (add/delete steps, reorder execution steps, modify transition parameters).
+5. **SDK Download Center**: Copy and download compiled Python, TypeScript, or Rust SDKs, and standard YAML specifications.
 
 ---
 
@@ -185,58 +163,33 @@ cd ..
 
 ---
 
-### 🧪 2. Run the Verification Pipeline
+### 🧪 2. Running Verification & Tests
 
-To execute a complete test compile run (which spins up a local mock store sandbox, runs the crawler, generates the specifications, and tests the output python SDK):
-
+To run the complete test suite locally:
 ```bash
-# From the project root
-backend/venv/bin/python test_pipeline.py
+python -m pytest --cov=backend/app --cov-report=term-missing tests/
+```
+
+To run a single verification pipeline (which spins up a local mock store sandbox, runs the crawler, generates the specifications, and tests the output python SDK):
+```bash
+python test_pipeline.py
 ```
 
 Upon success, you will see `🏆 VERIFICATION SUCCESSFUL!` and your generated files will be written to `/shared/specs/`.
 
-#### Running E2E Integration Tests (Feature E)
-Once the compilation is complete and the mock store sandbox is running, you can run the auto-generated E2E integration test suite:
-```bash
-backend/venv/bin/python shared/specs/test_sdk.py
-```
-
-#### Running MCP Server Tests (Feature D)
-To test the generated Model Context Protocol (MCP) server:
-```bash
-backend/venv/bin/python test_mcp_server.py
-```
-This tests the JSON-RPC stdio protocol handshake, tool listings, tool execution, and shutdown functions.
-
 ---
 
-### 🖥️ 3. Running the Dashboard and APIs
+### 📦 3. Production Deployment (Docker-Compose)
 
-To run the complete platform locally, open three terminal split tabs:
-
-#### Tab A: Backend FastAPI Server
+To deploy the entire environment (PostgreSQL, Redis, FastAPI App, background task Worker, Next.js frontend) with a single command:
 ```bash
-backend/venv/bin/python -m uvicorn backend.app.main:app --port 8000 --reload
+docker-compose -f docker-compose.prod.yml up --build
 ```
-
-#### Tab B: Sandbox Target Website
-```bash
-backend/venv/bin/python -m uvicorn backend.mock_site.main:app --port 8001 --reload
-```
-
-#### Tab C: Next.js Frontend Dashboard
-```bash
-cd frontend
-npm run dev
-```
-
-Visit **[http://localhost:3000](http://localhost:3000)** to view your Shiny Fishstick workspace!
 
 ---
 
 ## 📜 Contributing
-We welcome contributions to Shiny Fishstick! Please read [CONTRIBUTING.md](file:///Users/adityadixit/Documents/Code/Preflight%20Designer/contributing.md) for details on our code of conduct and submission process.
+We welcome contributions to Shiny Fishstick! Please read [CONTRIBUTING.md](file:///Users/adityadixit/Documents/Code/Preflight Designer/contributing.md) for details.
 
 ## 📄 License
-This project is licensed under the Shiny Fishstick Proprietary Developer License. See [LICENSE](file:///Users/adityadixit/Documents/Code/Preflight%20Designer/LICENSE) for full details.
+This project is licensed under the Shiny Fishstick Proprietary Developer License. See [LICENSE](file:///Users/adityadixit/Documents/Code/Preflight Designer/LICENSE) for details.
