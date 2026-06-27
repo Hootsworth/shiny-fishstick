@@ -21,3 +21,4 @@ build/
 
 # Encryption Key
 .encryption.key
+.coverage

@@ -34,6 +34,6 @@ jobs:
       run: |
         python -m playwright install --with-deps chromium
 
-    - name: Run Spec Compilation and E2E Integration tests
+    - name: Run Test Suite with Pytest Coverage
       run: |
-        python test_pipeline.py
+        python -m pytest --cov=backend/app --cov-report=term-missing tests/

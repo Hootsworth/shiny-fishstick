@@ -8,6 +8,7 @@ from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 from sqlalchemy.orm import Session
 
+from ..core.logging import log
 from ..core.security import decrypt_data
 from ..models.db_models import Crawl, Page
 from .analyzer import DOMAnalyzerService
@@ -92,7 +93,7 @@ class CrawlerService:
                         cookies = session_ind.get("cookies", [])
                         if cookies:
                             await context.add_cookies(cookies)
-                            print("[Crawler] Restored cookies from saved session config.")
+                            log.info("session_cookies_restored")
 
                         # Restore localStorage and sessionStorage
                         # Storage must be added after navigating to the root domain.
@@ -102,13 +103,13 @@ class CrawlerService:
 
                         if ls:
                             await page.evaluate("ls => { for (let k in ls) { localStorage.setItem(k, ls[k]); } }", ls)
-                            print("[Crawler] Restored localStorage context.")
+                            log.info("session_local_storage_restored")
                         if ss:
                             await page.evaluate("ss => { for (let k in ss) { sessionStorage.setItem(k, ss[k]); } }", ss)
-                            print("[Crawler] Restored sessionStorage context.")
+                            log.info("session_storage_restored")
 
                     except Exception as e:
-                        print(f"[Crawler] Error restoring session on startup: {e}")
+                        log.error("session_restore_failed", error=str(e))
 
                 # Attach API discovery network sniffer
                 api_disco = APIDiscoveryService(self.project_id)
@@ -122,7 +123,7 @@ class CrawlerService:
                     if current_base in self.visited_urls:
                         continue
 
-                    print(f"[Crawler] Attempting to visit: {current_url}")
+                    log.info("crawler_visit", url=current_url)
 
                     try:
                         # Visit page
@@ -133,7 +134,7 @@ class CrawlerService:
 
                         # Handle authentication redirects dynamically
                         if actual_base != current_base:
-                            print(f"[Crawler] Redirected from {current_base} to {actual_base}")
+                            log.info("crawler_redirect", from_url=current_base, to_url=actual_base)
                             if actual_base not in self.visited_urls:
                                 self.visited_urls.add(actual_base)
                                 # Re-queue the original URL so we visit it later (e.g. after logging in)
@@ -169,7 +170,7 @@ class CrawlerService:
                         if "/product/" in target_url_for_db:
                             add_to_cart_selector = "#add-to-cart-btn"
                             if await page.locator(add_to_cart_selector).count() > 0:
-                                print(f"[Crawler] Clicking {add_to_cart_selector} on {target_url_for_db} to capture background API calls...")
+                                log.info("crawler_xhr_probe", selector=add_to_cart_selector, url=target_url_for_db)
 
                                 # Gather context inputs (attributes of the button + URL segments)
                                 parsed_url = urlparse(target_url_for_db)
@@ -228,10 +229,10 @@ class CrawlerService:
                                         self.pages_to_visit.append(product_url)
 
                     except Exception as e:
-                        print(f"[Crawler] Error visiting {current_url}: {e}")
+                        log.error("crawler_page_error", url=current_url, error=str(e))
 
                 # Run Semantic Intent classification on all extracted elements
-                print(f"[Crawler] Crawl completed. Extracting semantic intents for {len(all_discovered_elements)} elements...")
+                log.info("crawler_extraction_complete", count=len(all_discovered_elements))
                 intent_service = SemanticIntentService(self.db, self.project_id)
                 await intent_service.classify_and_save(all_discovered_elements)
 
@@ -242,10 +243,10 @@ class CrawlerService:
 
             crawl_obj.status = "completed"
             self.db.commit()
-            print("[Crawler] Crawl pipeline successfully finished.")
+            log.info("crawler_pipeline_completed")
 
         except Exception as e:
-            print(f"[Crawler] Fatal crawler exception: {e}")
+            log.error("crawler_fatal_error", error=str(e))
             if crawl_obj:
                 crawl_obj.status = "failed"
                 crawl_obj.error_message = str(e)

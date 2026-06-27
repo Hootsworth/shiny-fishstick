@@ -6,7 +6,7 @@ import time
 import requests
 
 # Add workspace to path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../"))
 sys.path.append(BASE_DIR)
 
 from backend.app.core.database import Base, SessionLocal, engine
@@ -16,7 +16,7 @@ from backend.app.services.generator import SDKGeneratorService
 from backend.app.services.workflow import WorkflowDiscoveryService
 
 
-def main():
+def test_crawl_pipeline():
     # 1. Start Mock Store on port 8001
     print("Starting Mock E-Commerce Store on port 8001...")
     mock_proc = subprocess.Popen(
@@ -34,7 +34,7 @@ def main():
     except Exception as e:
         print(f"Failed to connect to Mock Store: {e}")
         mock_proc.terminate()
-        sys.exit(1)
+        raise e
 
     # 2. Setup SQLite tables
     print("Initializing Database tables...")
@@ -139,14 +139,12 @@ def main():
 
     except Exception as e:
         print(f"Error executing generated SDK: {e}")
-        import traceback
-        traceback.print_exc()
         mock_proc.terminate()
-        sys.exit(1)
+        raise e
 
     # Clean up mock store
     mock_proc.terminate()
     print("Cleaned up processes. Verification complete.")
 
 if __name__ == "__main__":
-    main()
+    test_crawl_pipeline()

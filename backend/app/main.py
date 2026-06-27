@@ -166,3 +166,16 @@ def get_project_deltas(
         "crawl_2_id": c2_id,
         "deltas": deltas
     }
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+@app.get("/ready")
+def readiness_check(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ready", "db": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Database connection failed: {e}")

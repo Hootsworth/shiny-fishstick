@@ -5,20 +5,19 @@ from backend.app.models.db_models import Crawl, Element, Page, Project
 from backend.app.services.updater import SpecUpdaterService
 
 
-def test_drift_engine():
-    print("Initializing Database Session...")
+def test_updater_crawls_drift():
+    # Setup test database
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     try:
-        print("Creating Mock Project...")
+        # Create Project
         project = Project(name="Drift Test Project", root_url="http://localhost:9999")
         db.add(project)
         db.commit()
         db.refresh(project)
 
-        # 1. Create Crawl 1 (Baseline)
-        print("Creating Baseline Crawl 1...")
+        # 1. Create Baseline Crawl
         crawl_1 = Crawl(project_id=project.id, status="completed")
         db.add(crawl_1)
         db.commit()
@@ -57,8 +56,7 @@ def test_drift_engine():
         db.add_all([el_1_1, el_1_2, el_1_3])
         db.commit()
 
-        # 2. Create Crawl 2 (Shifted/Drifted state)
-        print("Creating Drifted Crawl 2...")
+        # 2. Create Drifted Crawl
         crawl_2 = Crawl(project_id=project.id, status="completed")
         db.add(crawl_2)
         db.commit()
@@ -69,12 +67,7 @@ def test_drift_engine():
         db.commit()
         db.refresh(page_2)
 
-        # Add elements for Page 2:
-        # - el_2_1: Selector drift: #btn-add-to-cart -> #add-to-cart-action (same text and attributes)
-        # - el_2_2: Unmodified: #search-input
-        # - el_2_3: Added: #btn-checkout (new element)
-        # (Missing el_1_3: #btn-delete-item represents deleted element)
-
+        # Add elements for Page 2
         el_2_1 = Element(
             page_id=page_2.id,
             tag_name="button",
@@ -102,58 +95,32 @@ def test_drift_engine():
         db.add_all([el_2_1, el_2_2, el_2_4])
         db.commit()
 
-        # 3. Execute comparison delta engine
-        print("Running SpecUpdaterService Drift Detection Engine...")
+        # 3. Execute comparison engine
         updater = SpecUpdaterService(db, project.id)
         res = updater.compare_crawls(crawl_1.id, crawl_2.id)
 
-        # Output results
-        print("\n--- Drift Engine Comparison Results ---")
         catalog_delta = res.get("/catalog", {})
-        print(f"Catalog Page Status: {catalog_delta.get('status')}")
-
         elements = catalog_delta.get("elements", {})
-        print("\n[ADDED Elements]:")
-        for el in elements.get("added", []):
-            print(f"  + Tag: {el['tag_name']}, Selector: {el['selector']}, Text: {el['text_content']}")
 
-        print("\n[DELETED Elements]:")
-        for el in elements.get("deleted", []):
-            print(f"  - Tag: {el['tag_name']}, Selector: {el['selector']}, Text: {el['text_content']}")
+        # Assertions
+        assert len(elements["added"]) == 1
+        assert elements["added"][0]["selector"] == "#btn-checkout"
 
-        print("\n[MODIFIED (DRIFTED) Elements]:")
-        for el in elements.get("modified", []):
-            print(f"  ~ Tag: {el['tag_name']}, Old: {el['old_selector']}, New: {el['new_selector']}, Confidence: {el['drift_confidence']}")
+        assert len(elements["deleted"]) == 1
+        assert elements["deleted"][0]["selector"] == "#btn-delete-item"
 
-        print("\n[UNMODIFIED Elements]:")
-        for el in elements.get("unmodified", []):
-            print(f"  = Tag: {el['tag_name']}, Selector: {el['selector']}")
+        assert len(elements["modified"]) == 1
+        assert elements["modified"][0]["old_selector"] == "#btn-add-to-cart"
+        assert elements["modified"][0]["new_selector"] == "#add-to-cart-action"
 
-        # Assertions to verify correctness
-        assert len(elements["added"]) == 1, "Should detect 1 added element"
-        assert elements["added"][0]["selector"] == "#btn-checkout", "Added element should be #btn-checkout"
-
-        assert len(elements["deleted"]) == 1, "Should detect 1 deleted element"
-        assert elements["deleted"][0]["selector"] == "#btn-delete-item", "Deleted element should be #btn-delete-item"
-
-        assert len(elements["modified"]) == 1, "Should detect 1 drifted element"
-        assert elements["modified"][0]["old_selector"] == "#btn-add-to-cart", "Old selector should be #btn-add-to-cart"
-        assert elements["modified"][0]["new_selector"] == "#add-to-cart-action", "New selector should be #add-to-cart-action"
-
-        assert len(elements["unmodified"]) == 1, "Should detect 1 unmodified element"
-        assert elements["unmodified"][0]["selector"] == "#search-input", "Unmodified selector should be #search-input"
-
-        print("\n🎉 ALL DRIFT ENGINE ASSERTIONS PASSED SUCCESSFULLY!")
+        assert len(elements["unmodified"]) == 1
+        assert elements["unmodified"][0]["selector"] == "#search-input"
 
     finally:
-        # Clean up database records
-        print("Cleaning up test records...")
+        # Clean up database
         db.query(Element).filter(Element.page_id.in_([page_1.id, page_2.id])).delete(synchronize_session=False)
         db.query(Page).filter(Page.crawl_id.in_([crawl_1.id, crawl_2.id])).delete(synchronize_session=False)
         db.query(Crawl).filter(Crawl.project_id == project.id).delete(synchronize_session=False)
         db.query(Project).filter(Project.id == project.id).delete(synchronize_session=False)
         db.commit()
         db.close()
-
-if __name__ == "__main__":
-    test_drift_engine()

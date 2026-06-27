@@ -7,7 +7,7 @@ import time
 
 import requests
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../"))
 
 def test_mcp():
     # 1. Check if Mock Store is already running on port 8001
@@ -152,7 +152,6 @@ def test_mcp():
 
     except Exception as e:
         print(f"Test failed: {e}")
-        # print stderr if available
         try:
             print("Server stderr:")
             proc.terminate()
@@ -162,7 +161,7 @@ def test_mcp():
             pass
         if mock_proc:
             mock_proc.terminate()
-        sys.exit(1)
+        raise e
     finally:
         try:
             proc.terminate()

@@ -3,6 +3,7 @@ import json
 from playwright.async_api import Page as PlaywrightPage
 from sqlalchemy.orm import Session
 
+from ..core.logging import log
 from ..models.db_models import Action, Crawl, Element, Page
 
 
@@ -31,7 +32,7 @@ class SpecUpdaterService:
                     continue
 
                 # Selector is missing! Let's attempt self-healing
-                print(f"[Spec Updater] Action '{action.name}' selector drifted! Attempting to heal: '{selector}'")
+                log.warning("selector_drifted", action=action.name, old_selector=selector)
 
                 # 1. Grab all interactive elements on the current page to search for a match
                 buttons = await page.locator("button, input[type='submit'], a.btn, a.button").all()
@@ -65,7 +66,7 @@ class SpecUpdaterService:
                                 "new_selector": new_sel
                             })
                             healed = True
-                            print(f"[Spec Updater] Healed action '{action.name}' with new selector: '{new_sel}'")
+                            log.info("selector_healed", action=action.name, old_selector=selector, new_selector=new_sel)
                             break
 
                 if not healed:
@@ -78,10 +79,10 @@ class SpecUpdaterService:
                         "old_selector": selector,
                         "new_selector": None
                     })
-                    print(f"[Spec Updater] Action '{action.name}' is broken. Manual review needed.")
+                    log.error("selector_broken", action=action.name, old_selector=selector)
 
             except Exception as e:
-                print(f"[Spec Updater] Error scanning element drift: {e}")
+                log.error("drift_scan_error", error=str(e))
 
         return healed_actions
 

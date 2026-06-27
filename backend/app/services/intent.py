@@ -5,6 +5,7 @@ import google.generativeai as genai
 from sqlalchemy.orm import Session
 
 from ..core.config import settings
+from ..core.logging import log
 from ..models.db_models import Action, Element
 
 
@@ -18,7 +19,7 @@ class SemanticIntentService:
             try:
                 genai.configure(api_key=self.api_key)
             except Exception as e:
-                print(f"Failed to configure Gemini SDK: {e}. Falling back to heuristics.")
+                log.warning("gemini_config_failed", error=str(e))
                 self.use_llm = False
 
     async def classify_and_save(self, elements: List[Element]) -> List[Action]:
@@ -302,7 +303,7 @@ class SemanticIntentService:
             data = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
             return data
         except Exception as e:
-            print(f"Gemini form classification error: {e}. Falling back to heuristics.")
+            log.warning("gemini_form_classification_error", error=str(e))
             attrs = json.loads(form.attributes or "{}")
             return self.classify_form_heuristics(attrs.get("id", ""), form, form_inputs)
 
@@ -332,7 +333,7 @@ class SemanticIntentService:
             data = json.loads(response.text.strip().replace("```json", "").replace("```", ""))
             return data
         except Exception as e:
-            print(f"Gemini button classification error: {e}. Falling back to heuristics.")
+            log.warning("gemini_button_classification_error", error=str(e))
             attrs = json.loads(btn.attributes or "{}")
             text = btn.text_content.lower()
             return self.classify_button_heuristics(text, attrs.get("id", ""), btn)
