@@ -118,3 +118,13 @@ export async function updateAction(actionId: string, payload: Partial<Action>): 
   if (!res.ok) throw new Error("Failed to update action");
   return res.json();
 }
+
+export async function executePlayground(projectId: string, actionId: string, parameters: any): Promise<any> {
+  const res = await fetch(`${API_BASE}/playground/execute`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project_id: projectId, action_id: actionId, parameters }),
+  });
+  if (!res.ok) throw new Error("Failed to execute playground action");
+  return res.json();
+}

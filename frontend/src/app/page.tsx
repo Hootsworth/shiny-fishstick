@@ -243,7 +243,7 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'actions' && (
-            <WorkflowTable actions={actions} onActionsUpdated={loadProjectDetails} />
+            <WorkflowTable projectId={selectedProject?.id || ""} actions={actions} onActionsUpdated={loadProjectDetails} />
           )}
 
           {activeTab === 'workflow' && (

@@ -72,3 +72,8 @@ class ActionUpdate(BaseModel):
     selector: Optional[str] = None
     parameters: Optional[str] = None
     assertions: Optional[str] = None
+
+class PlaygroundExecuteRequest(BaseModel):
+    project_id: str
+    action_id: str
+    parameters: dict = {}

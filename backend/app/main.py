@@ -1,17 +1,19 @@
 import json
 from typing import List
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
 from backend.app.core.database import Base, engine, get_db
+from backend.app.core.logging import log
 from backend.app.models.db_models import Action, Crawl, Project, SpecVersion, Workflow
 from backend.app.schemas.pyd_models import (
     ActionResponse,
     ActionUpdate,
     CrawlResponse,
+    PlaygroundExecuteRequest,
     ProjectCreate,
     ProjectResponse,
     WorkflowResponse,
@@ -222,3 +224,33 @@ def update_action(action_id: str, payload: ActionUpdate, db: Session = Depends(g
     db.commit()
     db.refresh(action)
     return action
+
+@app.websocket("/api/ws/hub/{agent_id}")
+async def websocket_hub_endpoint(websocket: WebSocket, agent_id: str):
+    from backend.app.services.agent_hub import agent_hub
+    await agent_hub.register(agent_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+            if msg_type == "discover":
+                urls = data.get("urls", [])
+                await agent_hub.broadcast_discoveries(agent_id, urls)
+            elif msg_type == "request_work":
+                await agent_hub.request_work(agent_id)
+    except WebSocketDisconnect:
+        await agent_hub.unregister(agent_id)
+    except Exception as e:
+        log.warning("agent_websocket_error", agent_id=agent_id, error=str(e))
+        await agent_hub.unregister(agent_id)
+
+@app.post("/api/playground/execute")
+async def execute_playground_action(payload: PlaygroundExecuteRequest, db: Session = Depends(get_db)):
+    from backend.app.services.playground import PlaygroundService
+    service = PlaygroundService(db)
+    result = await service.execute_action(
+        project_id=payload.project_id,
+        action_id=payload.action_id,
+        parameters=payload.parameters
+    )
+    return result

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Compass, Plus, Trash2, Save, Edit2, X } from 'lucide-react';
+import { Compass, Plus, Trash2, Save, Edit2, X, Play, Loader, ShieldAlert, CheckCircle } from 'lucide-react';
 import * as api from '../lib/api';
 
 interface Parameter {
@@ -26,15 +26,22 @@ interface Action {
 }
 
 interface WorkflowTableProps {
+  projectId: string;
   actions: Action[];
   onActionsUpdated?: () => void;
 }
 
-export function WorkflowTable({ actions, onActionsUpdated }: WorkflowTableProps) {
+export function WorkflowTable({ projectId, actions, onActionsUpdated }: WorkflowTableProps) {
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [editAssertions, setEditAssertions] = useState<AssertionItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Playground state
+  const [testingActionId, setTestingActionId] = useState<string | null>(null);
+  const [testParams, setTestParams] = useState<Record<string, string>>({});
+  const [runningPlayground, setRunningPlayground] = useState(false);
+  const [playgroundResult, setPlaygroundResult] = useState<any | null>(null);
 
   const startEditing = (act: Action) => {
     setEditingActionId(act.id);
@@ -70,7 +77,6 @@ export function WorkflowTable({ actions, onActionsUpdated }: WorkflowTableProps)
     setSaving(true);
     setMessage('');
     try {
-      // Filter empty selectors/values if needed, then update
       const filtered = editAssertions.map(item => ({
         type: item.type,
         selector: item.selector?.trim() || '',
@@ -87,6 +93,50 @@ export function WorkflowTable({ actions, onActionsUpdated }: WorkflowTableProps)
       setMessage(`Error saving assertions: ${e.message}`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Playground runners
+  const startTesting = (act: Action) => {
+    setTestingActionId(act.id);
+    setPlaygroundResult(null);
+    const initialParams: Record<string, string> = {};
+    try {
+      const params = JSON.parse(act.parameters || "[]");
+      params.forEach((p: any) => {
+        if (p.name !== "_frame_selector") {
+          // prefill default values
+          if (act.name === 'login') {
+            initialParams[p.name] = p.name === 'email' ? 'admin@example.com' : 'password123';
+          } else if (act.name === 'search_products') {
+            initialParams[p.name] = 'Quantum';
+          } else {
+            initialParams[p.name] = '';
+          }
+        }
+      });
+    } catch (e) {}
+    setTestParams(initialParams);
+  };
+
+  const handleParamChange = (name: string, val: string) => {
+    setTestParams(prev => ({ ...prev, [name]: val }));
+  };
+
+  const runPlayground = async (actionId: string) => {
+    setRunningPlayground(true);
+    setPlaygroundResult(null);
+    try {
+      const res = await api.executePlayground(projectId, actionId, testParams);
+      setPlaygroundResult(res);
+    } catch (e: any) {
+      setPlaygroundResult({
+        success: false,
+        error: `Sandbox execution failed: ${e.message}`,
+        assertion_results: []
+      });
+    } finally {
+      setRunningPlayground(false);
     }
   };
 
@@ -123,6 +173,7 @@ export function WorkflowTable({ actions, onActionsUpdated }: WorkflowTableProps)
           }
 
           const isEditing = editingActionId === act.id;
+          const isTesting = testingActionId === act.id;
 
           return (
             <div key={act.id} className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-6">
@@ -136,24 +187,33 @@ export function WorkflowTable({ actions, onActionsUpdated }: WorkflowTableProps)
                   </div>
                   <p className="text-gray-600 font-medium mt-2">{act.description}</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
+                <div className="flex items-center gap-2">
+                  <div className="text-right mr-2">
                     <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest">Confidence</span>
                     <strong className="text-2xl font-black">{(act.confidence_score * 100).toFixed(0)}%</strong>
                   </div>
-                  {!isEditing && (
-                    <button
-                      onClick={() => startEditing(act)}
-                      className="bg-yellow-200 hover:bg-yellow-300 border-2 border-black font-black px-3 py-1.5 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                      Assertions
-                    </button>
+                  {!isEditing && !isTesting && (
+                    <>
+                      <button
+                        onClick={() => startEditing(act)}
+                        className="bg-yellow-200 hover:bg-yellow-300 border-2 border-black font-black px-3 py-1.5 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        Assertions
+                      </button>
+                      <button
+                        onClick={() => startTesting(act)}
+                        className="bg-pink-200 hover:bg-pink-300 border-2 border-black font-black px-3 py-1.5 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      >
+                        <Play className="h-4 w-4" />
+                        Playground
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
 
-              {isEditing ? (
+              {isEditing && (
                 // EDIT ASSERTIONS PANEL
                 <div className="mt-6 bg-gray-50 border-2 border-black p-4 space-y-4">
                   <div className="flex justify-between items-center">
@@ -238,14 +298,135 @@ export function WorkflowTable({ actions, onActionsUpdated }: WorkflowTableProps)
                     </button>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {isTesting && (
+                // PLAYGROUND DEBUGGER PANEL
+                <div className="mt-6 bg-gray-900 text-white border-2 border-black p-6 space-y-6">
+                  <div className="flex justify-between items-center border-b border-gray-800 pb-3">
+                    <h4 className="text-sm font-black uppercase tracking-widest text-pink-400">Playground Sandbox Run</h4>
+                    <button onClick={() => setTestingActionId(null)} className="text-gray-400 hover:text-white">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Inputs panel */}
+                    <div className="space-y-4">
+                      <h5 className="text-xs font-black uppercase tracking-wider text-gray-400">Action Argument Inputs</h5>
+                      {params.filter(p => p.name !== "_frame_selector").length > 0 ? (
+                        <div className="space-y-3">
+                          {params.filter(p => p.name !== "_frame_selector").map((p) => (
+                            <div key={p.name}>
+                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{p.name}</label>
+                              <input
+                                type="text"
+                                value={testParams[p.name] || ''}
+                                onChange={(e) => handleParamChange(p.name, e.target.value)}
+                                className="w-full bg-gray-800 border border-gray-700 p-2 font-bold text-white text-sm focus:outline-none focus:border-pink-500"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">No parameter inputs needed for this action.</p>
+                      )}
+
+                      <button
+                        onClick={() => runPlayground(act.id)}
+                        disabled={runningPlayground}
+                        className="w-full bg-pink-500 hover:bg-pink-600 text-white border-2 border-black font-black py-3 flex items-center justify-center gap-2 uppercase text-sm tracking-wider shadow-[3px_3px_0px_0px_rgba(255,255,255,0.9)]"
+                      >
+                        {runningPlayground ? (
+                          <>
+                            <Loader className="h-4 w-4 animate-spin" />
+                            Executing Sandbox context...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4" />
+                            Run Sandbox Execution
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Results panel */}
+                    <div className="bg-gray-950 border border-gray-800 p-4 flex flex-col justify-center min-h-[250px]">
+                      {runningPlayground && (
+                        <div className="text-center space-y-3">
+                          <Loader className="h-8 w-8 text-pink-400 animate-spin mx-auto" />
+                          <p className="text-xs font-bold text-gray-400 uppercase">Spawning Playwright session...</p>
+                        </div>
+                      )}
+
+                      {!runningPlayground && !playgroundResult && (
+                        <p className="text-sm text-gray-500 italic text-center">Awaiting execution run...</p>
+                      )}
+
+                      {!runningPlayground && playgroundResult && (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                            <span className="text-xs font-bold text-gray-400 uppercase">Sandbox Results</span>
+                            <div className="flex items-center gap-2">
+                              {playgroundResult.success ? (
+                                <span className="bg-green-900/30 text-green-400 border border-green-800 text-[10px] font-black px-2 py-0.5 uppercase tracking-wide flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" /> SUCCESS
+                                </span>
+                              ) : (
+                                <span className="bg-red-900/30 text-red-400 border border-red-800 text-[10px] font-black px-2 py-0.5 uppercase tracking-wide flex items-center gap-1">
+                                  <ShieldAlert className="h-3 w-3" /> FAILED
+                                </span>
+                              )}
+                              <span className="text-gray-500 text-xs font-bold">{(playgroundResult.execution_time_ms / 1000).toFixed(2)}s</span>
+                            </div>
+                          </div>
+
+                          {playgroundResult.error && (
+                            <div className="bg-red-950/40 border border-red-900 p-3 text-xs text-red-300 font-mono">
+                              {playgroundResult.error}
+                            </div>
+                          )}
+
+                          {playgroundResult.assertion_results?.length > 0 && (
+                            <div className="space-y-1.5">
+                              <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Assertions Checked</span>
+                              {playgroundResult.assertion_results.map((ast: any, idx: number) => (
+                                <div key={idx} className={`text-xs p-2 border flex justify-between ${ast.passed ? 'bg-green-950/30 border-green-950 text-green-400' : 'bg-red-950/30 border-red-950 text-red-400'}`}>
+                                  <div>
+                                    <span className="font-bold uppercase mr-1">{ast.type}</span>
+                                    {ast.selector && <span className="font-mono text-[10px] opacity-70">[{ast.selector}]</span>}
+                                  </div>
+                                  <span className="font-black">{ast.passed ? 'PASSED' : 'FAILED'}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {playgroundResult.screenshot && (
+                            <div className="border border-gray-800 p-1 bg-gray-900 mt-2">
+                              <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sandbox Live Feed screenshot</span>
+                              <img
+                                src={`data:image/png;base64,${playgroundResult.screenshot}`}
+                                alt="Sandbox Screenshot"
+                                className="w-full max-h-64 object-contain border border-black bg-white"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!isEditing && !isTesting && (
                 // VIEW MODE DETAILS
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <div className="text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">Anchor Selector</div>
                     <code className="block bg-gray-50 p-2 border-2 border-black rounded-none font-mono text-sm font-bold">{act.selector}</code>
                     
-                    {/* DISPLAY ACTIVE ASSERTIONS */}
                     {currentAssertions.length > 0 && (
                       <div className="mt-4">
                         <div className="text-xs font-black text-gray-500 mb-2 uppercase tracking-widest text-pink-500">Active Test Assertions</div>
