@@ -266,3 +266,119 @@ def place_order(session: Optional[str] = Cookie(None)):
         return RedirectResponse(url="/login")
     CART.clear()
     return RedirectResponse(url="/catalog?msg=Order placed successfully!", status_code=303)
+
+@app.get("/saas", response_class=HTMLResponse)
+def saas_dashboard(session: Optional[str] = Cookie(None), username: Optional[str] = Cookie(None)):
+    if not session:
+        return RedirectResponse(url="/login")
+    content = """
+    <div class="max-w-4xl mx-auto bg-slate-900 border border-gray-800 p-8 rounded-2xl mt-8">
+        <h2 class="text-3xl font-black mb-4">SaaS Performance Monitor</h2>
+        <div id="saas-metrics-table" class="grid grid-cols-3 gap-6 mb-6">
+            <div class="bg-gray-800 p-4 border border-gray-700">
+                <span class="text-xs text-gray-400 block font-bold uppercase">System Load</span>
+                <strong class="text-2xl font-black">12.4%</strong>
+            </div>
+            <div class="bg-gray-800 p-4 border border-gray-700">
+                <span class="text-xs text-gray-400 block font-bold uppercase">Active Connections</span>
+                <strong class="text-2xl font-black">849 / sec</strong>
+            </div>
+            <div class="bg-gray-800 p-4 border border-gray-700">
+                <span class="text-xs text-gray-400 block font-bold uppercase">Memory Usage</span>
+                <strong class="text-2xl font-black">2.4 GB</strong>
+            </div>
+        </div>
+        <div id="search-form-saas" class="flex gap-4">
+            <input type="text" id="saas-query" placeholder="Filter metrics logs..." class="bg-slate-800 border border-gray-705 p-2 text-white flex-grow">
+            <button id="saas-filter-btn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 font-bold">Apply Filter</button>
+        </div>
+    </div>
+    """
+    return HTMLResponse(content=layout("SaaS Dashboard", content, username=username))
+
+@app.get("/multistep", response_class=HTMLResponse)
+def multistep_form_page(step: int = 1, username: Optional[str] = None):
+    if step == 1:
+        step_html = """
+        <h3 class="text-xl font-bold mb-4">Step 1: Contact Info</h3>
+        <form action="/multistep" method="GET" id="step1-form" class="space-y-4">
+            <input type="hidden" name="step" value="2">
+            <div>
+                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Full Name</label>
+                <input type="text" id="step1-name" name="name" required class="w-full bg-slate-800 border border-gray-700 p-2 text-white">
+            </div>
+            <button type="submit" id="step1-submit-btn" class="bg-blue-600 px-4 py-2 font-bold">Continue to Step 2</button>
+        </form>
+        """
+    elif step == 2:
+        step_html = """
+        <h3 class="text-xl font-bold mb-4">Step 2: Preferences</h3>
+        <form action="/multistep" method="GET" id="step2-form" class="space-y-4">
+            <input type="hidden" name="step" value="3">
+            <div>
+                <label class="block text-xs uppercase font-bold text-gray-400 mb-1">Favorite Framework</label>
+                <input type="text" id="step2-pref" name="pref" required class="w-full bg-slate-800 border border-gray-700 p-2 text-white">
+            </div>
+            <button type="submit" id="step2-submit-btn" class="bg-blue-600 px-4 py-2 font-bold">Submit Answers</button>
+        </form>
+        """
+    else:
+        step_html = """
+        <div class="text-center space-y-4">
+            <h3 class="text-2xl font-bold text-green-400">Step 3: Questionnaire Completed!</h3>
+            <p class="text-gray-400">Thank you for submitting your survey preferences.</p>
+            <a href="/catalog" class="inline-block bg-blue-600 px-4 py-2 font-bold">Go to Catalog</a>
+        </div>
+        """
+    content = f"""
+    <div class="max-w-md mx-auto bg-slate-900 border border-gray-800 p-8 rounded-2xl shadow-xl mt-8" id="multistep-container">
+        <h2 class="text-2xl font-black mb-6 text-center">Multi-Step Setup Survey</h2>
+        {step_html}
+    </div>
+    """
+    return HTMLResponse(content=layout("Survey", content, username=username))
+
+@app.get("/search", response_class=HTMLResponse)
+def paginated_search(q: Optional[str] = None, page: int = 1, username: Optional[str] = None):
+    items = [
+        {"id": "1", "name": "Item Alpha", "desc": "Preflight assistant code component"},
+        {"id": "2", "name": "Item Beta", "desc": "WebSocket coordinate hub registry"},
+        {"id": "3", "name": "Item Gamma", "desc": "Playwright sandbox execution metrics"},
+        {"id": "4", "name": "Item Delta", "desc": "OpenAPI spec generator schema"},
+        {"id": "5", "name": "Item Epsilon", "desc": "Cross-environment state reconciler drift"},
+    ]
+    if q:
+        items = [i for i in items if q.lower() in i["name"].lower() or q.lower() in i["desc"].lower()]
+
+    items_html = ""
+    for it in items:
+        items_html += f"""
+        <tr class="border-b border-gray-800">
+            <td class="p-3 font-bold">{it["name"]}</td>
+            <td class="p-3 text-gray-400">{it["desc"]}</td>
+        </tr>
+        """
+    if not items:
+        items_html = '<tr><td colspan="2" class="p-3 text-center text-gray-500">No items found matching filter.</td></tr>'
+
+    content = f"""
+    <div class="max-w-2xl mx-auto bg-slate-900 border border-gray-800 p-8 rounded-2xl shadow-xl mt-8">
+        <h2 class="text-2xl font-black mb-6">Interactive Index Search</h2>
+        <form action="/search" method="GET" id="table-search-form" class="flex gap-2 mb-6">
+            <input type="text" id="search-query-val" name="q" value="{q or ''}" placeholder="Filter components list..." class="bg-slate-800 border border-gray-700 p-2 text-white flex-grow">
+            <button type="submit" id="search-filter-submit-btn" class="bg-blue-600 px-4 py-2 font-bold">Search Table</button>
+        </form>
+        <table class="w-full text-left border border-gray-800" id="paginated-results-table">
+            <thead>
+                <tr class="bg-slate-800 text-xs font-bold uppercase text-gray-400 border-b border-gray-700">
+                    <th class="p-3">Component Name</th>
+                    <th class="p-3">Function Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {items_html}
+            </tbody>
+        </table>
+    </div>
+    """
+    return HTMLResponse(content=layout("Search Table", content, username=username))

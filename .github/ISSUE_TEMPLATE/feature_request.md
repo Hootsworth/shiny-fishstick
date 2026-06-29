@@ -1,20 +1,23 @@
 ---
-name: 🚀 Feature Request
-about: Suggest an idea or new feature for Shiny Fishstick
+name: Feature Request
+about: Suggest a new capability or improvement for Shiny Fishstick
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''
-
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Is your feature request related to a problem? Please describe.
 
-**Describe the solution you'd like**
+A clear and concise description of what the problem is.
+
+## Describe the Solution You'd Like
+
 A clear and concise description of what you want to happen.
 
-**Describe alternatives you've considered**
+## Describe Alternatives You've Considered
+
 A clear and concise description of any alternative solutions or features you've considered.
 
-**Additional context**
-Add any other context or mockups about the feature request here.
+## Additional Context
+
+Add any other context, screenshots, or code proposals about the feature request here.

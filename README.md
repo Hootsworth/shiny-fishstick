@@ -1,5 +1,10 @@
 # 🐟 Shiny Fishstick
 
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](tests/)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](setup.py)
+[![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)](frontend/)
+
 > **The Navigation Layer for AI Browser Agents.**  
 > *Because agents shouldn't have to parse raw HTML, guess CSS selectors, or deal with login redirects just to add a product to a cart.*
 

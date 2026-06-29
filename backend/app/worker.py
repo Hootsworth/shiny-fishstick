@@ -43,6 +43,5 @@ class WorkerSettings:
     redis_settings = RedisSettings.from_dsn(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
 
 if __name__ == "__main__":
-    import asyncio
     from arq import run_worker
     run_worker(WorkerSettings)

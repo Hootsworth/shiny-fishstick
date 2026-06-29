@@ -1,33 +1,36 @@
 ---
-name: 🐛 Bug Report
+name: Bug Report
 about: Create a report to help us improve Shiny Fishstick
 title: '[BUG] '
 labels: bug
 assignees: ''
-
 ---
 
-**Describe the bug**
+## Describe the Bug
+
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '...'
-3. Scroll down to '...'
-4. See error
+## To Reproduce
 
-**Expected behavior**
+Steps to reproduce the behavior:
+1. Target website URL:
+2. Crawl settings used (max pages / depth):
+3. Action trigger causing failure:
+
+## Expected Behavior
+
 A clear and concise description of what you expected to happen.
 
-**Screenshots/Logs**
-If applicable, add screenshots or console output/logs to help explain your problem.
+## Execution Logs
 
-**Environment (please complete the following information):**
+Please paste any relevant console logs, stack traces, or terminal outputs here.
+
+```bash
+# logs
+```
+
+## Desktop Environment
+
 - OS: [e.g. macOS, Ubuntu]
-- Python Version [e.g. 3.10]
-- Node.js Version [e.g. 18.16]
-- Playwright Version [e.g. 1.40.0]
-
-**Additional context**
-Add any other context about the problem here.
+- Python Version: [e.g. 3.10]
+- Playwright Version: [e.g. 1.40]
