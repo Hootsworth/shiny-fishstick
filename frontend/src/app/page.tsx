@@ -9,6 +9,7 @@ import {
   Workflow,
   Code,
   Loader2,
+  HelpCircle,
   Compass as CompassIcon
 } from 'lucide-react';
 
@@ -185,6 +186,7 @@ export default function Dashboard() {
             <NavButton id="workflow" icon={Workflow} label="Workflows" isActive={activeTab === 'workflow'} />
             <NavButton id="api" icon={Database} label="API Routes" isActive={activeTab === 'api'} />
             <NavButton id="sdk" icon={Code} label="SDK Generator" isActive={activeTab === 'sdk'} />
+            <NavButton id="docs" icon={HelpCircle} label="Docs & Help" isActive={activeTab === 'docs'} />
           </nav>
         </div>
 
@@ -256,6 +258,97 @@ export default function Dashboard() {
 
           {activeTab === 'sdk' && (
             <DownloadPanel specs={specs} />
+          )}
+
+          {activeTab === 'docs' && (
+            <div className="bg-white border-2 border-black p-8 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-8 max-h-[75vh] overflow-y-auto">
+              <h2 className="text-3xl font-black mb-6 uppercase tracking-tight">Docs & Reference</h2>
+              
+              {/* Getting Started (5 minutes) */}
+              <div>
+                <h3 className="text-lg font-bold bg-pink-100 p-2 border-2 border-black inline-block uppercase tracking-wider mb-3">🚀 Getting Started (5 Minutes)</h3>
+                <p className="text-sm text-gray-700 mt-2 mb-2 leading-relaxed">
+                  Shiny Fishstick turns websites into agent-callable action specs in under 5 minutes:
+                </p>
+                <pre className="bg-slate-900 text-slate-100 p-4 border-2 border-black font-mono text-xs overflow-x-auto">
+                  {"# 1. Initialize environment setup\nmake setup\n\n# 2. Run all verification tests\nmake test\n\n# 3. Run the compiler demo pipeline\nmake demo"}
+                </pre>
+              </div>
+
+              {/* Architecture */}
+              <div>
+                <h3 className="text-lg font-bold bg-blue-100 p-2 border-2 border-black inline-block uppercase tracking-wider mb-3">🏗️ Architecture</h3>
+                <ul className="list-disc pl-5 text-sm text-gray-700 space-y-2 leading-relaxed">
+                  <li><strong>Crawler Service:</strong> Handles dynamic browser authentication log-ins and captures secure session states.</li>
+                  <li><strong>Workflow Builder:</strong> Translates DOM form submissions into FSM transition diagrams.</li>
+                  <li><strong>Spec Exporter:</strong> Compiles actions lists into Swagger OpenAPI definitions and Client SDK packages.</li>
+                  <li><strong>UI Chaos Monkey:</strong> Mutates HTML selector classes and injects latency to verify locator self-healing resilience.</li>
+                </ul>
+              </div>
+
+              {/* CLI Reference */}
+              <div>
+                <h3 className="text-lg font-bold bg-green-100 p-2 border-2 border-black inline-block uppercase tracking-wider mb-3">💻 CLI Reference</h3>
+                <div className="space-y-4">
+                  <div>
+                    <code className="bg-gray-100 px-2 py-1 text-xs border border-black font-bold">shiny compile &lt;url&gt; --out &lt;dir&gt;</code>
+                    <p className="text-xs text-gray-600 mt-1">Crawls website pages and compiles specifications folders.</p>
+                  </div>
+                  <div>
+                    <code className="bg-gray-100 px-2 py-1 text-xs border border-black font-bold">shiny inspect &lt;spec&gt;</code>
+                    <p className="text-xs text-gray-600 mt-1">Reads and prints compiled actions list.</p>
+                  </div>
+                  <div>
+                    <code className="bg-gray-100 px-2 py-1 text-xs border border-black font-bold">shiny validate &lt;spec&gt;</code>
+                    <p className="text-xs text-gray-600 mt-1">Runs structural schema validation checks.</p>
+                  </div>
+                  <div>
+                    <code className="bg-gray-100 px-2 py-1 text-xs border border-black font-bold">shiny serve-mcp &lt;spec&gt;</code>
+                    <p className="text-xs text-gray-600 mt-1">Starts standard JSON-RPC mcp server hooks.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Examples */}
+              <div>
+                <h3 className="text-lg font-bold bg-yellow-100 p-2 border-2 border-black inline-block uppercase tracking-wider mb-3">📁 Examples</h3>
+                <p className="text-sm text-gray-700 mt-1 leading-relaxed">
+                  Sample templates are stored under <code className="bg-gray-100 px-1 border border-black text-xs">/examples/</code>:
+                </p>
+                <ul className="list-disc pl-5 text-sm text-gray-700 mt-2 space-y-1">
+                  <li><strong>ecommerce/preflight.yaml</strong>: Catalogue cart checkout actions.</li>
+                  <li><strong>saas-dashboard/preflight.yaml</strong>: SaaS monitoring filter table metrics.</li>
+                  <li><strong>mcp-agent/agent.py</strong>: Demo code showing agent connections.</li>
+                </ul>
+              </div>
+
+              {/* FAQ */}
+              <div>
+                <h3 className="text-lg font-bold bg-purple-100 p-2 border-2 border-black inline-block uppercase tracking-wider mb-3">❓ FAQ</h3>
+                <div className="space-y-3 mt-2">
+                  <p className="text-sm font-bold">Q: Why not just Playwright?</p>
+                  <p className="text-xs text-gray-700">A: Playwright is lower-level. Shiny Fishstick compiles websites into semantic actions (e.g. `checkout()`) so agents can call them natively.</p>
+                  <p className="text-sm font-bold">Q: Are credentials database rows secure?</p>
+                  <p className="text-xs text-gray-700">A: Yes, cookies and localStorage sessions are encrypted at rest using AES-256 Fernet keys.</p>
+                </div>
+              </div>
+
+              {/* Roadmap */}
+              <div>
+                <h3 className="text-lg font-bold bg-red-100 p-2 border-2 border-black inline-block uppercase tracking-wider mb-3">🗺️ Roadmap</h3>
+                <p className="text-sm text-gray-700 mt-2 leading-relaxed">
+                  Milestones include visual pixel regression comparisons, multi-tenant Keycloak RBAC layouts, offline llama.cpp parses, and Tauri clients wrappers.
+                </p>
+              </div>
+
+              {/* Contributing */}
+              <div>
+                <h3 className="text-lg font-bold bg-orange-100 p-2 border-2 border-black inline-block uppercase tracking-wider mb-3">📜 Contributing</h3>
+                <p className="text-sm text-gray-700 mt-2 leading-relaxed">
+                  Read <code className="bg-gray-100 px-1 border border-black text-xs">CONTRIBUTING.md</code> in the repository root for code style rules and local setups.
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </main>

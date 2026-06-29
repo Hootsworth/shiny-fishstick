@@ -190,14 +190,84 @@ Upon success, you will see `🏆 VERIFICATION SUCCESSFUL!` and your generated fi
 
 ---
 
-### 📦 3. Production Deployment (Docker-Compose)
+## 🛠️ Getting Started (5 Minutes)
 
-To deploy the entire environment (PostgreSQL, Redis, FastAPI App, background task Worker, Next.js frontend) with a single command:
+Quickly run our verification pipeline using our local developer targets:
 ```bash
-docker-compose -f docker-compose.prod.yml up --build
+# 1. Initialize environment setup (creates virtualenv, downloads playwright, installs node)
+make setup
+
+# 2. Run all unit and integration verification tests
+make test
+
+# 3. Compile a demo workflow against a local mock ecommerce site
+make demo
 ```
+This boots a sandbox website, runs the crawler, discovers semantic actions, validates them, and writes SDK modules to `./shared/specs/`.
 
 ---
+
+## 📁 Examples
+We bundle several sample specification templates inside `./examples/`:
+*   [examples/ecommerce/](examples/ecommerce/preflight.yaml): Compiled action spec for store catalogues and checkout buttons.
+*   [examples/saas-dashboard/](examples/saas-dashboard/preflight.yaml): Compiled action spec for metrics monitoring filters.
+*   [examples/mcp-agent/](examples/mcp-agent/agent.py): Code showing how agents interact with the validator, specs, and MCP servers.
+
+---
+
+## 💻 CLI Reference
+Shiny Fishstick exposes a powerful python command line utility `shiny` (and `shiny-fishstick`):
+
+### 1. Compile Specs
+```bash
+shiny compile https://example.com --out ./specs
+```
+Runs the browser automation crawler, identifies forms and interactive locators, discovers sequential workflows, and generates the SDK client folders to the target directory.
+
+### 2. Inspect Specs
+```bash
+shiny inspect ./specs/preflight.yaml
+```
+Loads the YAML spec, checks syntax validation, and prints a formatted actions report.
+
+### 3. Validate Specs
+```bash
+shiny validate ./specs/preflight.yaml
+```
+Performs structural schema validation checking types and required parameters.
+
+### 4. Serve MCP Server
+```bash
+shiny serve-mcp ./specs/preflight.yaml
+```
+Exposes the compiled actions dictionary as standard toolsets over the Model Context Protocol (MCP) stdin/stdout channel.
+
+### 5. Execute SDK Tests
+```bash
+shiny test ./specs/preflight.yaml
+```
+Runs layout regression playbacks to verify page element selectors drift status.
+
+---
+
+## ❓ FAQ
+
+### Why not just Playwright?
+Playwright provides low-level, structure-sensitive browser controls. Shiny Fishstick compiles websites into high-level semantic actions. Agents can call `add_to_cart(product_id)` instead of reasoning over structural page selectors or paying context window taxes on DOM changes.
+
+### Is credentials database storage secure?
+Yes. All captured sessions, browser cookies, and localstorage values are fully encrypted at rest using AES-256 Fernet keys in `auth.py`.
+
+### Can I run compilation offline?
+Yes. Shiny Fishstick is designed to fall back to heuristic DOM structural analysers if no LLM inference API key is configured.
+
+---
+
+## 🗺️ Roadmap
+*   **Phase 1-3 (DX & Telemetry)**: Playwright-Stealth integration, Shadow DOM scan, encrypted session states.
+*   **Phase 4-5 (Swagger & SDKs)**: Swagger exporters, arq distributed workers, state reconcilers, multi-language client builders.
+*   **Phase 6-7 (Regression & Tuning)**: Pixel-diff engine, Alert webhook hubs, layouts dataset generator, local offline runtimes.
+*   **Phase 8-10 (Enterprise & Scale)**: Spec Validator, Multi-tenant SSO workspaces, Chaos Monkey, Tauri desktop client, Terraform charts.
 
 ## 🌐 The Big Vision: A Shared Action-Spec Layer for the Agentic Web
 
