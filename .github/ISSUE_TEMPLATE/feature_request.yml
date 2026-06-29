@@ -1,0 +1,42 @@
+name: Feature Request
+description: Suggest a new capability or improvement for Shiny Fishstick
+title: "[FEATURE] "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for proposing a new feature!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem? Please describe.
+      description: A clear and concise description of what the problem is.
+      placeholder: I'm always frustrated when...
+    validations:
+      required: false
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the Solution You'd Like
+      description: A clear and concise description of what you want to happen.
+      placeholder: I want Shiny Fishstick to be able to...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe Alternatives You've Considered
+      description: A clear and concise description of any alternative solutions or features you've considered.
+      placeholder: I tried doing X, but it was too slow/complex...
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or code proposals about the feature request here.
+      placeholder: Screenshots, mockups, or extra info...
+    validations:
+      required: false
