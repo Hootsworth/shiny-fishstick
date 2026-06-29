@@ -163,14 +163,15 @@ Think of it as OpenAPI — but for websites that were never designed to have an 
 
 Full methodology and reproduction instructions: **[BENCHMARKS.md](BENCHMARKS.md)**
 
-Two suites, all numbers live and verifiable:
+Three suites, all numbers live and verifiable:
 
 ```bash
 make demo && python benchmark.py           # mock store (controlled)
 python benchmark_real_sites.py             # Wikipedia, HN, GitHub (live)
+python benchmark_developer_effort.py       # developer effort (code metrics)
 ```
 
-### Mock Store — 5 Categories
+### Performance — Mock Store
 
 | Benchmark | Raw Playwright | Compiled SDK | Result |
 |---|---|---|---|
@@ -180,9 +181,9 @@ python benchmark_real_sites.py             # Wikipedia, HN, GitHub (live)
 | Python heap delta | 1,642 KB | 21 KB | **99% less** |
 | Selector self-healing | ❌ manual fix | ✅ 1,648 ms auto | similarity: 1.00 |
 
-### Real Sites — Wikipedia, Hacker News, GitHub
+### Performance — Real Sites (Wikipedia, Hacker News, GitHub)
 
-These hit production — no mock servers. The "Compiled SDK" column is the API that Shiny Fishstick's compiler discovers and exposes as a typed SDK method.
+No mock servers. The "Compiled SDK" column is the API Shiny Fishstick discovers and exposes as a typed method.
 
 | Site | Page tokens | API tokens | Reduction | Speed-up | Reliability |
 |---|---|---|---|---|---|
@@ -191,13 +192,26 @@ These hit production — no mock servers. The "Compiled SDK" column is the API t
 | GitHub (vscode) | 34,292 | 5 | **100%** | 24× | 0% → 100% |
 | **Average** | **25,808** | **46** | **99.9%** | **12×** | **+100 pp** |
 
-DOM mutation reliability was 0/10 for raw Playwright on every site in every trial — hard-coded selectors break every time. The API path hit 10/10 across all 30 total trials.
+### Developer Effort — Writing the Same Agent in Both Approaches
 
-> See [BENCHMARKS.md](BENCHMARKS.md) for full per-site breakdowns, methodology, and honest caveats on each metric.
+Task: login → search → add\_to\_cart → checkout.
 
+| Metric | Raw Playwright | Shiny Fishstick | Improvement |
+|---|---|---|---|
+| Lines of code | 75 | 10 | **87% less** |
+| CSS selectors to hand-discover & maintain | 6 | 0 | **none to manage** |
+| Explicit browser sync calls | 12 | 0 | **100% less** |
+| Boilerplate lines (session/teardown/errors) | 43 of 75 (57%) | 1 of 10 (10%) | **98% less** |
+| Cyclomatic complexity | 11 | 1 | **10× simpler** |
+| Setup steps before first line of agent code | 10 | 3 | **7 fewer** |
+| Manual fixes needed per full site redesign | 8 | 0 | **zero maintenance** |
 
+The 75-line raw Playwright script and the 10-line Shiny Fishstick script do exactly the same thing. 57% of the Playwright version is pure infrastructure — session capture, error handling, teardown. With Shiny Fishstick, 90% of the script is intent.
+
+> See [BENCHMARKS.md](BENCHMARKS.md) for full per-metric explanations, the complete code side-by-side, and honest caveats on every number.
 
 ---
+
 
 ## Features
 
