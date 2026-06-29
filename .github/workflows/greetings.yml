@@ -1,0 +1,16 @@
+name: Greetings
+
+on: [pull_request_target, issues]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+    - uses: actions/first-interaction@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        issue-message: "Welcome to Shiny Fishstick! Thank you for opening your first issue. 🐟 Please make sure to check out our [Contributing Guidelines](CONTRIBUTING.md) to get started."
+        pr-message: "Thank you for submitting your first PR to Shiny Fishstick! 🐟 We appreciate your contribution. One of our maintainers will review it shortly. In the meantime, please check that you have run `ruff check --fix .` and all tests pass."

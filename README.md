@@ -1,8 +1,7 @@
 # 🐟 Shiny Fishstick
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](tests/)
-[![Tests](https://img.shields.io/badge/tests-29%20passing-brightgreen.svg)](tests/)
+[![CI Status](https://github.com/Hootsworth/shiny-fishstick/actions/workflows/ci.yml/badge.svg)](https://github.com/Hootsworth/shiny-fishstick/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](backend/)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-green.svg)](frontend/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-purple.svg)](examples/mcp-agent/)

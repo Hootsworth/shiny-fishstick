@@ -1,0 +1,8 @@
+# Global owners
+* @Hootsworth
+
+# Frontend specific
+/frontend/ @Hootsworth
+
+# Backend specific
+/backend/ @Hootsworth
