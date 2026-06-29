@@ -124,3 +124,60 @@ def test_ollama_llm_provider_form_classification(mocker):
 
     finally:
         db.close()
+
+
+def test_gemini_llm_provider_form_classification(mocker):
+    mocker.patch("backend.app.services.intent.settings.GEMINI_API_KEY", "mock-gemini-key")
+    mocker.patch("backend.app.services.intent.settings.OLLAMA_MODEL", "")
+
+    mock_model = mocker.MagicMock()
+    mock_response = mocker.AsyncMock()
+    mock_response.text = json.dumps({
+        "name": "custom_login",
+        "description": "User login route",
+        "intent": "login",
+        "selector": "#login-form",
+        "parameters": [
+            {"name": "email", "type": "string", "selector": "#email", "required": True},
+            {"name": "password", "type": "string", "selector": "#password", "required": True}
+        ],
+        "action_type": "browser",
+        "confidence_score": 0.98
+    })
+    mock_model.generate_content_async = mocker.AsyncMock(return_value=mock_response)
+    mocker.patch("google.generativeai.GenerativeModel", return_value=mock_model)
+    mocker.patch("google.generativeai.configure")
+
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+
+    try:
+        service = SemanticIntentService(db, "proj-gemini")
+
+        assert service.llm_provider == "gemini"
+        assert service.use_llm is True
+
+        form_el = Element(
+            page_id="page-1",
+            tag_name="form",
+            selector="#login-form",
+            element_type="form",
+            attributes="{}",
+            outer_html="<form id='login-form'><input id='email'/></form>"
+        )
+        input_el = Element(
+            page_id="page-1",
+            tag_name="input",
+            selector="#email",
+            element_type="input",
+            attributes='{"name": "email"}',
+            outer_html="<input id='email'/>"
+        )
+
+        res = asyncio.run(service.classify_form_llm(form_el, [input_el]))
+        assert res["name"] == "custom_login"
+        assert res["intent"] == "login"
+        assert len(res["parameters"]) == 2
+
+    finally:
+        db.close()

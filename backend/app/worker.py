@@ -41,3 +41,8 @@ async def crawl_task(ctx, project_id: str, crawl_id: str, root_url: str):
 class WorkerSettings:
     functions = [crawl_task]
     redis_settings = RedisSettings.from_dsn(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+
+if __name__ == "__main__":
+    import asyncio
+    from arq import run_worker
+    run_worker(WorkerSettings)

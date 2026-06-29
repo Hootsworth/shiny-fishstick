@@ -19,6 +19,17 @@ def get_fernet() -> Fernet:
             key = key_str.encode("utf-8")
         else:
             key = key_str
+
+        # Validate key strength and format
+        import base64
+        try:
+            decoded = base64.urlsafe_b64decode(key)
+            if len(decoded) != 32:
+                print("WARNING: SHINY_FISHSTICK_ENCRYPTION_KEY must be a 32-byte URL-safe base64 key. Using it may be insecure.", file=sys.stderr)
+            if key_str in ["weak_secret_key", "default_key", "default_weak_key", "1234567890123456789012345678901234567890123="]:
+                print("WARNING: SHINY_FISHSTICK_ENCRYPTION_KEY is using a weak or default secret key. Do not use this in production!", file=sys.stderr)
+        except Exception:
+            print("WARNING: SHINY_FISHSTICK_ENCRYPTION_KEY is not a valid base64 format.", file=sys.stderr)
     else:
         # Fallback to local file in project root
         current_dir = os.path.dirname(os.path.abspath(__file__))

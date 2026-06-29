@@ -1,23 +1,49 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: preflight-dev-redis
+    ports:
+      - "6379:6379"
+
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    container_name: preflight-dev-backend
     ports:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./backend:/app/backend
       - ./shared:/app/shared
       - ./preflight.db:/app/preflight.db
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: preflight-dev-worker
+    command: python -m backend.app.worker
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+      - ./preflight.db:/app/preflight.db
+    depends_on:
+      - redis
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: preflight-dev-frontend
     ports:
       - "3000:3000"
     environment:
@@ -29,6 +55,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    container_name: preflight-dev-mock-store
     ports:
       - "8001:8001"
     command: uvicorn backend.mock_site.main:app --host 0.0.0.0 --port 8001
