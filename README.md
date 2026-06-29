@@ -54,10 +54,15 @@ Instead of expensive DOM scraping, AI agents can now interact with web platforms
 - 🌐 **Configurable Proxy Routing**: Restores connection-level proxy settings (including user/pass authentication) from environment variables to bypass IP-based rate limiting.
 - 🖼️ **Sub-Frame / Iframe Traversal**: Scans all sub-frames recursively during analysis, saving nested elements and generating dynamic `frame_locator` actions.
 - 🔒 **Encrypted Credentials Store**: Encrypts sensitive database session configurations and credentials using `cryptography.fernet` symmetric encryption (auto-provisions local `.encryption.key`).
-- 🎨 **Visual FSM Editor (New)**: Drag-and-drop sorting panel allowing developers to reorder workflow transition sequences, customize target page routing, insert/delete step nodes, and commit saves directly back to the database.
-- 📝 **Action Assertions Builder (New)**: Exposes interactive validation configuration on actions directly via the dictionary dashboard. Developers can build custom Playwright verification checks (`visible`, `not_visible`, `contains_text`, `url_equals`) that compile into the E2E test suites.
-- 🦀 **Multi-Language SDKs - Rust (New)**: Compile-ready Rust client SDK (`sdk.rs`) output mapping actions using `reqwest` endpoints, `serde_json` objects, and commented browser actions.
-- 🦙 **Local Offline LLM Support - Ollama (New)**: Route intent classification prompts entirely offline to local inference servers (e.g. Ollama with `llama3`/`mistral`), avoiding any external API key dependencies.
+- 🎨 **Visual FSM Editor**: Drag-and-drop sorting panel allowing developers to reorder workflow transition sequences, customize target page routing, insert/delete step nodes, and commit saves directly back to the database.
+- 📝 **Action Assertions Builder**: Exposes interactive validation configuration on actions directly via the dictionary dashboard. Developers can build custom Playwright verification checks (`visible`, `not_visible`, `contains_text`, `url_equals`) that compile into the E2E test suites.
+- 🦀 **Multi-Language SDKs - Rust**: Compile-ready Rust client SDK (`sdk.rs`) output mapping actions using `reqwest` endpoints, `serde_json` objects, and commented browser actions.
+- 🦙 **Local Offline LLM Support - Ollama**: Route intent classification prompts entirely offline to local inference servers (e.g. Ollama with `llama3`/`mistral`), avoiding any external API key dependencies.
+- 🔗 **Clustered WebSocket Coordination Hub (New)**: Coordinates distributed, parallel crawling nodes via a decentralized WebSocket registry server (`agent_hub.py`), avoiding duplicate URL scanning.
+- ⚡ **Sandbox Playground Execution Runner (New)**: Sandbox Playwright runner (`playground.py`) that tests custom assertions live on pages and returns real-time base64 browser screenshot streams to the UI.
+- 📄 **OpenAPI Spec Exporter (New)**: Auto-compiles discovered raw user UI actions and network endpoints into standardized Swagger/OpenAPI 3.0 specs (`openapi_exporter.py`).
+- 📊 **Worker Queue Autoscaler Metrics (New)**: Integrates a Redis queue length scanner (`worker_scaler.py`) advising scaling actions based on task load.
+- 🔄 **Multi-Environment State Reconciler (New)**: Cross-environment DOM reconciler service (`state_reconciler.py`) checking selectors validity across staging and production to report element layout drift.
 
 ---
 
@@ -130,8 +135,9 @@ The Next.js frontend provides a comprehensive suite of developer workspace pages
 1. **Projects Manager**: Create projects and track high-level statistics (discovered actions, api upgrades, and spec validity score).
 2. **Crawl & Log Feed**: Watch real-time logs stream in from the active Playwright web scraper.
 3. **Action Explorer**: Review classified actions, update CSS selectors, and add/remove **Playwright Assertions**.
-4. **FSM Visualizer**: Edit workflow diagrams representing sequential state transitions (add/delete steps, reorder execution steps, modify transition parameters).
-5. **SDK Download Center**: Copy and download compiled Python, TypeScript, or Rust SDKs, and standard YAML specifications.
+4. **Assertions Sandbox Playground (New)**: Test actions live in a Playwright sandbox, evaluate assertions, and view real-time screenshot feeds.
+5. **FSM Visualizer**: Edit workflow diagrams representing sequential state transitions (add/delete steps, reorder execution steps, modify transition parameters).
+6. **SDK Download Center**: Copy and download compiled Python, TypeScript, or Rust SDKs, and standard YAML specifications.
 
 ---
 
