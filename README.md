@@ -161,64 +161,41 @@ Think of it as OpenAPI — but for websites that were never designed to have an 
 
 ## Benchmarks
 
-All numbers below are from a live run against the included mock store. Reproduce them yourself:
+Full methodology and reproduction instructions: **[BENCHMARKS.md](BENCHMARKS.md)**
+
+Two suites, all numbers live and verifiable:
 
 ```bash
-make demo          # generate specs first
-python benchmark.py
+make demo && python benchmark.py           # mock store (controlled)
+python benchmark_real_sites.py             # Wikipedia, HN, GitHub (live)
 ```
 
-### 1 — Token / Context Window Overhead
+### Mock Store — 5 Categories
 
-| | Raw Playwright | Compiled SDK |
-|---|---|---|
-| Avg page size (tokens) | ~669 | ~144 |
-| Context per agent call | 669 tokens | 144 tokens |
-| **Reduction** | — | **78.5% fewer tokens** |
-| GPT-4o cost per call | ~$0.0033 | ~$0.00072 |
-| **At 10k calls/day** | — | **~$26/day saved** |
+| Benchmark | Raw Playwright | Compiled SDK | Result |
+|---|---|---|---|
+| Token overhead | ~669 tokens/call | ~144 tokens/call | **78.5% fewer tokens** |
+| Action latency (avg) | 1,444 ms | 1.5 ms | **953× faster** |
+| DOM mutation reliability | 0% (20/20 fail) | 100% (0/20 fail) | **+100 pp** |
+| Python heap delta | 1,642 KB | 21 KB | **99% less** |
+| Selector self-healing | ❌ manual fix | ✅ 1,648 ms auto | similarity: 1.00 |
 
-### 2 — Action Execution Latency (add\_to\_cart, 10 runs)
+### Real Sites — Wikipedia, Hacker News, GitHub
 
-| | Raw Playwright | Compiled SDK (direct API) |
-|---|---|---|
-| Avg latency | 1,444 ms | 1.5 ms |
-| p95 latency | 1,628 ms | 1.2 ms |
-| **Speed-up** | — | **953× faster** |
+These hit production — no mock servers. The "Compiled SDK" column is the API that Shiny Fishstick's compiler discovers and exposes as a typed SDK method.
 
-The Playwright path must: launch a browser → navigate to login → fill credentials → wait for redirect → navigate to product page → click button. The SDK path makes one HTTP call.
+| Site | Page tokens | API tokens | Reduction | Speed-up | Reliability |
+|---|---|---|---|---|---|
+| Wikipedia | 40,833 | 131 | **99.7%** | 8× | 0% → 100% |
+| Hacker News | 2,298 | 1 | **100%** | 3.5× | 0% → 100% |
+| GitHub (vscode) | 34,292 | 5 | **100%** | 24× | 0% → 100% |
+| **Average** | **25,808** | **46** | **99.9%** | **12×** | **+100 pp** |
 
-### 3 — Reliability Under DOM Mutations (20 trials each)
+DOM mutation reliability was 0/10 for raw Playwright on every site in every trial — hard-coded selectors break every time. The API path hit 10/10 across all 30 total trials.
 
-| | Raw Playwright | Compiled SDK |
-|---|---|---|
-| Failures | 20/20 | 0/20 |
-| Reliability | **0%** | **100%** |
+> See [BENCHMARKS.md](BENCHMARKS.md) for full per-site breakdowns, methodology, and honest caveats on each metric.
 
-Each trial mutated the button's `id` and `className` to a random string before attempting the action. The Playwright path hard-codes `#add-to-cart-btn` so it times out every single time. The SDK path calls the API endpoint directly — the DOM is irrelevant.
 
-### 4 — Memory Footprint per Action
-
-| | Raw Playwright | Compiled SDK |
-|---|---|---|
-| Python heap delta | 1,642 KB | 21 KB |
-| **Reduction** | — | **99% less** |
-
-This is Python heap only. Playwright additionally allocates ~100 MB+ for the Chromium subprocess — not included above.
-
-### 5 — Self-Healing Speed
-
-| | Raw Playwright | Shiny Fishstick Reconciler |
-|---|---|---|
-| After DOM mutation | ❌ Requires manual fix | ✅ Auto-healed |
-| Avg reconciliation time | N/A | 1,648 ms |
-| DOM similarity score | N/A | 1.00 |
-
-The reconciler compares selector candidates across production and staging, scores similarity, and heals the action in the spec — no manual update needed.
-
----
-
-> On real enterprise pages (10k–50k token DOMs), token reduction is typically 90–95%+. These numbers are from a minimal mock store.
 
 ---
 
