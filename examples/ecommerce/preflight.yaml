@@ -1,0 +1,30 @@
+version: 1.0.0
+site: http://localhost:8001
+actions:
+  login:
+    description: Authenticates the user session
+    action_type: browser
+    selector: '#login-submit-btn'
+    parameters:
+      - name: email
+        type: string
+        required: true
+        selector: '#email'
+      - name: password
+        type: string
+        required: true
+        selector: '#password'
+  search_products:
+    description: Filters catalog items list
+    action_type: browser
+    selector: '#search-submit-btn'
+    parameters:
+      - name: q
+        type: string
+        required: true
+        selector: '#search-query'
+  checkout:
+    description: Finalizes order checkout
+    action_type: browser
+    selector: '#checkout-submit-btn'
+    parameters: []

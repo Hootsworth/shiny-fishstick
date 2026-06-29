@@ -12,7 +12,7 @@ class SDKGeneratorService:
         self.db = db
         self.project_id = project_id
 
-    def generate_all(self) -> dict:
+    def generate_all(self, specs_dir: str = None) -> dict:
         project = self.db.query(Project).filter(Project.id == self.project_id).first()
         if not project:
             raise ValueError("Project not found")
@@ -86,9 +86,10 @@ class SDKGeneratorService:
         sdk_tests = self.generate_sdk_tests(project.root_url, workflows)
 
         # Write to files locally for easy access/download
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(current_dir, "../../../"))
-        specs_dir = os.path.join(project_root, "shared/specs")
+        if not specs_dir:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.abspath(os.path.join(current_dir, "../../../"))
+            specs_dir = os.path.join(project_root, "shared/specs")
         os.makedirs(specs_dir, exist_ok=True)
 
         with open(os.path.join(specs_dir, "preflight.yaml"), "w") as f:

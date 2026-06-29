@@ -200,7 +200,7 @@ docker-compose -f docker-compose.prod.yml up --build
 ---
 
 ## 📜 Contributing
-We welcome contributions to Shiny Fishstick! Please read [CONTRIBUTING.md](file:///Users/adityadixit/Documents/Code/Preflight Designer/contributing.md) for details.
+We welcome contributions to Shiny Fishstick! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## 📄 License
-This project is licensed under the Shiny Fishstick Proprietary Developer License. See [LICENSE](file:///Users/adityadixit/Documents/Code/Preflight Designer/LICENSE) for details.
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.

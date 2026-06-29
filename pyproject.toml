@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shiny-fishstick"
+version = "0.1.0-alpha"
+description = "A semantic web compilation and discovery tool for AI browser agents"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "sqlalchemy>=2.0.0",
+    "pydantic>=2.0.0",
+    "playwright>=1.35.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.1.2",
+    "google-generativeai>=0.3.0",
+    "aiohttp>=3.8.0",
+    "python-dotenv>=1.0.0",
+    "beautifulsoup4>=4.12.0",
+    "python-multipart>=0.0.6",
+    "cryptography>=41.0.0",
+    "playwright-stealth>=1.0.6",
+    "psycopg2-binary>=2.9.0",
+    "alembic>=1.11.0",
+    "arq>=0.25.0",
+    "redis>=5.0.0",
+    "structlog>=23.1.0",
+    "httpx>=0.24.0",
+    "mcp>=0.1.0",
+]
+
+[project.scripts]
+shiny = "app.cli:main"
+shiny-fishstick = "app.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "backend"}
+
+[tool.setuptools.packages.find]
+where = ["backend"]

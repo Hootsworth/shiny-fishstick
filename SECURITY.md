@@ -4,7 +4,7 @@ We take the security of Shiny Fishstick seriously. Because our tools handle sens
 
 ## Reporting a Vulnerability
 
-Do **not** open a public GitHub issue for security vulnerabilities. Instead, please report any security issues by emailing us privately at **aditya@example.com**.
+Do **not** open a public GitHub issue for security vulnerabilities. Instead, please report any security issues by emailing us privately at **adityapdixit2006@gmail.com**.
 
 We will review your submission and respond within 48 hours to coordinate a security patch.
 
