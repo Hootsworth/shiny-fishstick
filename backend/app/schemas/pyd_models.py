@@ -77,3 +77,8 @@ class PlaygroundExecuteRequest(BaseModel):
     project_id: str
     action_id: str
     parameters: dict = {}
+
+class ReconcileDriftRequest(BaseModel):
+    action_id: str
+    prod_url: str
+    staging_url: str

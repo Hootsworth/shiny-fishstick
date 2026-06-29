@@ -23,7 +23,7 @@ async def test_playground_execution_and_assertion_checking(mocker):
     )
 
     db = MagicMock()
-    
+
     def query_side_effect(model):
         from backend.app.models.db_models import Action, Project
         mock_query = MagicMock()
@@ -33,7 +33,7 @@ async def test_playground_execution_and_assertion_checking(mocker):
             project = Project(root_url="http://localhost:8001")
             mock_query.filter.return_value.first.return_value = project
         return mock_query
-        
+
     db.query.side_effect = query_side_effect
 
     mock_page = AsyncMock()

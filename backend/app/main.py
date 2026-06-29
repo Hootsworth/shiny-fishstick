@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from backend.app.schemas.pyd_models import (
     PlaygroundExecuteRequest,
     ProjectCreate,
     ProjectResponse,
+    ReconcileDriftRequest,
     WorkflowResponse,
     WorkflowUpdate,
 )
@@ -252,5 +253,29 @@ async def execute_playground_action(payload: PlaygroundExecuteRequest, db: Sessi
         project_id=payload.project_id,
         action_id=payload.action_id,
         parameters=payload.parameters
+    )
+    return result
+
+@app.get("/api/projects/{project_id}/openapi")
+def export_project_openapi(project_id: str, db: Session = Depends(get_db)):
+    from backend.app.services.openapi_exporter import OpenAPIExporterService
+    service = OpenAPIExporterService(db, project_id)
+    spec_yaml = service.export_openapi_spec()
+    return Response(content=spec_yaml, media_type="application/yaml")
+
+@app.get("/api/worker/stats")
+def get_worker_autoscale_stats():
+    from backend.app.services.worker_scaler import WorkerQueueAutoscaler
+    scaler = WorkerQueueAutoscaler()
+    return scaler.get_queue_stats()
+
+@app.post("/api/reconcile/drift")
+async def reconcile_action_drift(payload: ReconcileDriftRequest, db: Session = Depends(get_db)):
+    from backend.app.services.state_reconciler import StateReconcilerService
+    reconciler = StateReconcilerService(db)
+    result = await reconciler.reconcile_action_drift(
+        action_id=payload.action_id,
+        prod_url=payload.prod_url,
+        staging_url=payload.staging_url
     )
     return result
