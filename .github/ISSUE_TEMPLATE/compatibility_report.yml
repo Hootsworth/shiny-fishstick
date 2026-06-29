@@ -1,0 +1,54 @@
+name: Website Compatibility Report
+description: Report a website layout where the crawler or analyzer fails to map selectors correctly
+title: "[COMPATIBILITY] "
+labels: ["compatibility"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use this template if you encounter issues running Shiny Fishstick against a specific website.
+  - type: input
+    id: target-url
+    attributes:
+      label: Target Page URL
+      description: The URL of the page where the failure occurred.
+      placeholder: https://example.com/dashboard
+    validations:
+      required: true
+  - type: input
+    id: ui-framework
+    attributes:
+      label: UI Framework
+      description: If known (e.g. Next.js, Angular, React SPA)
+      placeholder: Next.js
+    validations:
+      required: false
+  - type: input
+    id: auth-method
+    attributes:
+      label: Authentication Method Required
+      description: e.g. JWT, cookies, MFA, or none
+      placeholder: JWT / Password login
+    validations:
+      required: false
+  - type: checkboxes
+    id: failure-description
+    attributes:
+      label: Description of Failure
+      description: Select all checkboxes that apply.
+      options:
+        - label: Crawler failed to traverse pages
+        - label: Selector extraction generated incorrect/broken paths
+        - label: XHR requests could not be sniffed
+        - label: FSM workflow compilation failed
+  - type: textarea
+    id: dom-snippet
+    attributes:
+      label: DOM Snippet / Selector Path
+      description: If possible, paste the HTML outerHTML snippet of the failed element.
+      render: html
+      placeholder: |
+        <button class="broken-btn">Click me</button>
+    validations:
+      required: false

@@ -1,0 +1,76 @@
+name: Bug Report
+description: Create a report to help us improve Shiny Fishstick
+title: "[BUG] "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting this issue! Please provide as much detail as possible to help us reproduce and fix it.
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the problem here...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: To Reproduce
+      description: |
+        Steps to reproduce the behavior.
+        Please specify:
+        1. Target website URL
+        2. Crawl settings used (max pages / depth)
+        3. Action trigger causing failure
+      placeholder: |
+        1. Target website URL: 
+        2. Crawl settings:
+        3. Step-by-step actions:
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: What should have happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Execution Logs
+      description: Please paste any relevant console logs, stack traces, or terminal outputs here.
+      render: bash
+      placeholder: |
+        # Paste terminal/console/crawler logs here
+    validations:
+      required: false
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: e.g. macOS, Ubuntu, Windows
+      placeholder: macOS 14.5
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: e.g. 3.10, 3.11, 3.12
+      placeholder: "3.10"
+    validations:
+      required: true
+  - type: input
+    id: playwright-version
+    attributes:
+      label: Playwright Version
+      description: e.g. 1.40
+      placeholder: "1.40"
+    validations:
+      required: false
