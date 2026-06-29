@@ -118,7 +118,7 @@ async def bench_latency():
             await page.locator("#email").fill("admin@example.com")
             await page.locator("#password").fill("password123")
             await page.locator("#login-submit-btn").click()
-            await page.wait_for_url(f"**/catalog**", timeout=6000)
+            await page.wait_for_url("**/catalog**", timeout=6000)
             # Navigate to product and click add-to-cart
             await page.goto(f"{BASE}/product/1", wait_until="networkidle")
             await page.locator("#add-to-cart-btn").click()

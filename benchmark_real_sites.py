@@ -254,7 +254,7 @@ async def main():
         header(f"SITE: {site['name'].upper()} — {site['description']}")
 
         # A. Tokens
-        print(f"\n  [A] Token / Context Overhead")
+        print("\n  [A] Token / Context Overhead")
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
@@ -288,7 +288,7 @@ async def main():
         row("Reliability gain:", f"+{reliability_gain:.0f} percentage points")
 
         # D. Memory
-        print(f"\n  [D] Python Heap Delta (one action)")
+        print("\n  [D] Python Heap Delta (one action)")
         pw_kb, api_kb = await bench_memory(site)
         mem_reduction = (1 - api_kb / pw_kb) * 100 if pw_kb > 0 else 0
         row("Playwright heap delta:", f"{pw_kb:.0f} KB")

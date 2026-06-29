@@ -23,7 +23,6 @@ The "Shiny Fishstick" usage script uses the actual generated SDK from
 shared/specs/sdk.py compiled against the included mock store.
 """
 
-import ast
 import re
 import textwrap
 
@@ -176,7 +175,7 @@ SELECTOR_SCENARIOS = [
 # ─── Metric Extraction ─────────────────────────────────────────────────────────
 
 def count_lines(code: str) -> int:
-    return len([l for l in code.splitlines() if l.strip()])
+    return len([line for line in code.splitlines() if line.strip()])
 
 
 def count_selectors(code: str) -> int:
