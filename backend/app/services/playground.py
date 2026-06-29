@@ -37,6 +37,20 @@ class PlaygroundService:
                 context = await browser.new_context()
                 page = await context.new_page()
 
+                from .stubbing import stub_engine
+                async def route_handler(route):
+                    req = route.request
+                    stub = stub_engine.get_stub(req.method, req.url)
+                    if stub:
+                        await route.fulfill(
+                            status=stub["status"],
+                            headers=stub["headers"],
+                            body=stub["body"]
+                        )
+                    else:
+                        await route.continue_()
+                await page.route("**/*", route_handler)
+
                 auth_cfg = self.db.query(AuthConfig).filter(AuthConfig.project_id == project_id).first()
                 if auth_cfg:
                     try:

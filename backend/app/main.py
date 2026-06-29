@@ -4,6 +4,7 @@ from typing import List
 from fastapi import Depends, FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.app.core.database import Base, engine, get_db
@@ -22,6 +23,23 @@ from backend.app.schemas.pyd_models import (
 )
 from backend.app.services.generator import SDKGeneratorService
 from backend.app.services.updater import SpecUpdaterService
+
+
+class SandboxLaunchRequest(BaseModel):
+    port: int
+
+
+class SandboxStubRequest(BaseModel):
+    url_pattern: str
+    method: str
+    status: int
+    body: str
+    headers: dict = None
+
+
+class SandboxChaosRequest(BaseModel):
+    enabled: bool
+    latency_delay_ms: int = 0
 
 # Initialize database schemas
 Base.metadata.create_all(bind=engine)
@@ -279,3 +297,37 @@ async def reconcile_action_drift(payload: ReconcileDriftRequest, db: Session = D
         staging_url=payload.staging_url
     )
     return result
+
+@app.post("/api/sandbox/launch")
+def launch_sandbox(payload: SandboxLaunchRequest):
+    from backend.app.services.sandbox_orchestrator import orchestrator
+    return orchestrator.start_sandbox(payload.port)
+
+@app.post("/api/sandbox/terminate")
+def terminate_sandbox(payload: SandboxLaunchRequest):
+    from backend.app.services.sandbox_orchestrator import orchestrator
+    return orchestrator.stop_sandbox(payload.port)
+
+@app.get("/api/sandbox/list")
+def list_sandboxes():
+    from backend.app.services.sandbox_orchestrator import orchestrator
+    return orchestrator.list_sandboxes()
+
+@app.post("/api/sandbox/stub")
+def register_api_stub(payload: SandboxStubRequest):
+    from backend.app.services.stubbing import stub_engine
+    stub_engine.register_stub(
+        url_pattern=payload.url_pattern,
+        method=payload.method,
+        status=payload.status,
+        body=payload.body,
+        headers=payload.headers
+    )
+    return {"status": "success"}
+
+@app.post("/api/sandbox/chaos")
+def configure_chaos_monkey(payload: SandboxChaosRequest):
+    from backend.app.services.chaos import chaos_monkey
+    chaos_monkey.enable_chaos(payload.enabled)
+    chaos_monkey.set_latency_delay(payload.latency_delay_ms)
+    return {"status": "success"}

@@ -199,6 +199,21 @@ docker-compose -f docker-compose.prod.yml up --build
 
 ---
 
+## 🌐 The Big Vision: A Shared Action-Spec Layer for the Agentic Web
+
+We believe browser agents shouldn't have to guess how to click, search, or buy on every unique website.
+
+Our goal is to turn **Shiny Fishstick** into a standard open-source web action spec ecosystem:
+1.  **`preflight.yaml` Spec**: A formal schema declaring semantic web actions and workflows.
+2.  **The Compiler & CLI**: Automates crawler-based discovery and spec compiles.
+3.  **The Validator (`shiny validate`)**: Enforces spec syntax correctness.
+4.  **Generators**: Compiles specs into multi-language client SDKs and Model Context Protocol (MCP) servers.
+5.  **Hosted registry**: A public registry where websites publish their preflight specs so agents can call them natively.
+
+By compiling the web into structured actions, we are building the semantic interface for the agentic web.
+
+---
+
 ## 📜 Contributing
 We welcome contributions to Shiny Fishstick! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 

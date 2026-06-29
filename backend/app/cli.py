@@ -76,9 +76,18 @@ def handle_inspect(args):
         with open(spec_path, "r") as f:
             spec = yaml.safe_load(f)
 
+        from app.services.validator import SpecValidator
+        is_valid, errors = SpecValidator.validate_spec(spec)
+
         print(f"🐟 Shiny Fishstick Spec Inspection: {spec_path}")
         print(f"  Target Website: {spec.get('site')}")
         print(f"  Spec Version: {spec.get('version')}")
+        if is_valid:
+            print("  Validation Status: ✅ VALID SPECIFICATION")
+        else:
+            print("  Validation Status: ❌ INVALID SPECIFICATION")
+            for err in errors:
+                print(f"    - {err}")
 
         actions = spec.get("actions", {})
         print(f"  Discovered Actions count: {len(actions)}")
@@ -96,6 +105,31 @@ def handle_inspect(args):
                     print(f"        * {p.get('name')} ({p.get('type')}, {req_str})")
     except Exception as e:
         print(f"❌ Error parsing spec file: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def handle_validate(args):
+    spec_path = args.spec_yaml
+    if not os.path.exists(spec_path):
+        print(f"❌ Error: Spec file not found at '{spec_path}'", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        with open(spec_path, "r") as f:
+            spec = yaml.safe_load(f)
+
+        from app.services.validator import SpecValidator
+        is_valid, errors = SpecValidator.validate_spec(spec)
+        if is_valid:
+            print("✅ Spec file is valid!")
+            sys.exit(0)
+        else:
+            print("❌ Spec file contains validation errors:")
+            for err in errors:
+                print(f"  - {err}")
+            sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error reading/parsing spec file: {e}", file=sys.stderr)
         sys.exit(1)
 
 
@@ -160,6 +194,11 @@ def main():
     inspect_parser = subparsers.add_parser("inspect", help="Inspect a compiled preflight spec file")
     inspect_parser.add_argument("spec_yaml", help="Path to preflight.yaml spec file")
     inspect_parser.set_defaults(func=handle_inspect)
+
+    # Validate Command
+    validate_parser = subparsers.add_parser("validate", help="Validate a compiled preflight spec file structure")
+    validate_parser.add_argument("spec_yaml", help="Path to preflight.yaml spec file")
+    validate_parser.set_defaults(func=handle_validate)
 
     # Serve MCP Command
     serve_parser = subparsers.add_parser("serve-mcp", help="Serve target preflight actions over Model Context Protocol")
