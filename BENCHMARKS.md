@@ -279,3 +279,166 @@ DOM mutation reliability was 0% for raw Playwright across all three sites in eve
 **On memory:** `tracemalloc` measures the Python interpreter heap only. Playwright's Chromium subprocess independently allocates 100–200 MB of system memory that is not reflected in these numbers.
 
 **Network variability:** Real-site latency numbers (Suite 2) reflect network conditions at time of run. The relative ratios (Playwright vs API) are stable across runs; absolute numbers may vary ±20% depending on network.
+
+---
+
+## What Happens When a Site Has No API?
+
+This is a fair question — not every website fires XHR/Fetch requests behind the scenes. Legacy CRUD apps, form-heavy government portals, and CAPTCHA-gated pages often have no interceptable network call at all. Here is exactly what Shiny Fishstick does in that case, grounded in the actual code.
+
+### How API upgrade detection works
+
+During compilation, the crawler navigates to each page and Shiny Fishstick registers a Playwright network interceptor (`api_disco.py`, `handle_request()`). Every `xhr` and `fetch` network request fired while interacting with an element is captured. After the crawl, the compiler looks for a "candidate" request to associate with each action — preferring write methods (`POST`, `PUT`, `PATCH`, `DELETE`) but falling back to any captured request.
+
+**An action is upgradable when:**
+1. At least one `xhr` or `fetch` request fired during its execution window
+2. That request is not a static asset (`.js`, `.css`, `.png`, etc.)
+3. A candidate request can be matched to the action
+
+**An action stays as `browser` when:**
+- No XHR/Fetch traffic was captured at all (pure HTML form submits, full page reloads, CAPTCHA walls, or entirely server-rendered interactions)
+- The compiler finds a candidate but cannot map its parameters to the action's inputs
+
+### What the compiler actually does
+
+When no upgrade is found, the action's `action_type` field is simply left as `"browser"`. There is no error, no warning, no special "non-upgradable" marker — it just stays as it was. The YAML spec omits the `api:` block for those actions:
+
+```yaml
+# Upgraded action — has an api: block
+add_to_cart:
+  action_type: api
+  selector: '#add-to-cart-btn'
+  api:
+    url: /api/cart/add
+    method: POST
+
+# Browser-only action — no api: block, selector is used directly
+submit_legacy_form:
+  action_type: browser
+  selector: '#submit-btn'
+  parameters:
+    - name: query
+      selector: '#search-input'
+```
+
+### What the generated SDK does for browser actions
+
+The generator (`generator.py`) branches on `action_type`. For `"browser"` actions, it emits real, working Playwright code — not a stub, not a placeholder.
+
+**Python SDK (browser action):**
+```python
+def submit_legacy_form(self, query: str):
+    # Browser Action — no API equivalent found during compilation
+    self.page.goto(self.root_url + "/search")
+    self.page.fill("#search-input", str(query))
+    self.page.click("#submit-btn")
+    self.page.wait_for_load_state("networkidle")
+    self.session_cookies = self.page.context.cookies()
+```
+
+**TypeScript SDK (browser action):**
+```typescript
+async submitLegacyForm(query: string): Promise<void> {
+    // Browser Action — no API equivalent found during compilation
+    await this.page.goto(`${this.rootUrl}/search`);
+    await this.page.fill('#search-input', String(query));
+    await this.page.click('#submit-btn');
+    await this.page.waitForLoadState('networkidle');
+    this.sessionCookies = await this.context.cookies();
+}
+```
+
+**Rust SDK (browser action):**  
+The Rust generator emits a descriptive comment + a `println!` stub, since Rust has no official Playwright binding. The intent is that the Rust SDK signals which actions require a WebDriver or CDP client to be implemented manually.
+
+```rust
+// Browser Action: submit_legacy_form
+// Selector: #submit-btn
+// This action has no API equivalent — implement using a CDP/WebDriver client
+println!("Interacting with element #submit-btn...");
+Ok(())
+```
+
+### Summary
+
+| Scenario | `action_type` | SDK output | Agent experience |
+|---|---|---|---|
+| XHR/Fetch found during crawl | `api` | Direct HTTP call | Fastest path, no browser needed |
+| No network traffic captured | `browser` | Real Playwright code (Py/TS) | Browser automation, same as before — but with stable selectors and FSM-managed state |
+| Rust target, browser action | `browser` | Descriptive stub + comment | Manual implementation required |
+
+**The key point:** Shiny Fishstick does not pretend a site has an API when it doesn't. For fully browser-bound sites, the compiled SDK is still useful — it gives the agent typed methods with stable selectors, captured session state, and FSM-ordered workflows. What it cannot do is bypass the browser itself.
+
+The benchmarks in this document show the best-case improvement (sites with discoverable APIs). For purely browser-bound sites, the token overhead and latency improvements are smaller, but the reliability and self-healing benefits still apply in full.
+
+---
+
+## What Do These Numbers Actually Mean?
+
+The benchmark tables are full of percentages, milliseconds, and "×" multipliers. Here is what each one means in plain terms, with concrete analogies.
+
+---
+
+### Token reduction (78–100%)
+
+**What a token is:**  
+LLMs like GPT-4 don't read sentences — they read chunks of text called tokens. Roughly every ¾ of a word is one token. More tokens = more cost and slower responses.
+
+**The analogy:**  
+Imagine you hired a personal assistant to book you a flight. Without Shiny Fishstick, every time they need to check flight options, you hand them the entire 500-page airline catalogue to read cover to cover. With Shiny Fishstick compiled, you hand them a single index card that says: *"Call United, say destination='NYC', date='July 4'."*
+
+**Wikipedia in real numbers:**  
+The Wikipedia Python article sends 40,833 tokens to the LLM every time an agent reads it. The compiled API response sends 131 tokens. If your agent checks Wikipedia 1,000 times a day at GPT-4o pricing ($5 per million tokens), that's the difference between spending $204/day and spending $0.65/day for the same information.
+
+---
+
+### Speed-up (3.5× to 953×)
+
+**What this measures:**  
+How many times faster it is to call the compiled SDK method versus making the same agent action through a real browser.
+
+**The analogy:**  
+Without Shiny Fishstick, asking an agent to add something to a cart is like asking someone to drive to the store, walk the aisles, find the item, carry it to the register, and pay — every single time you want to buy something. With Shiny Fishstick, it's like clicking "add to cart" on a website: one HTTP call, done in milliseconds.
+
+**Why the numbers vary by site:**  
+GitHub (24×) is faster to improve because GitHub's API is extremely fast and its page is heavy with React rendering. Hacker News (3.5×) is already a lightweight page, so the gap is smaller. The mock store (953×) is the most dramatic because it includes the full browser launch cost in every measurement.
+
+---
+
+### DOM Mutation Reliability (0% → 100%)
+
+**What this measures:**  
+When a developer changes the website's HTML — renaming a button, moving a form, redesigning a page — how often does the agent's action still work?
+
+**The analogy:**  
+Without Shiny Fishstick, your agent knows how to open a specific drawer in a specific desk to find the stapler. If someone moves the desk or relabels the drawers, the agent is completely lost. With a compiled SDK calling the API directly, it doesn't matter where the drawer is — it calls the warehouse directly and the stapler arrives regardless.
+
+**In the benchmarks:**  
+Every single one of the 20 mock store trials and 30 real-site trials broke the raw Playwright selector after a mutation. The API call succeeded every single time, because the server-side endpoint didn't change. In real agent deployments, frontend redesigns happen regularly and silently — this is what makes 0% reliability the realistic baseline for hard-coded selectors.
+
+---
+
+### Memory reduction (97–99%)
+
+**What this measures:**  
+How much computer memory is consumed to perform one action.
+
+**The analogy:**  
+Raw Playwright is like hiring a full film crew to take one photo — cameras, lighting rigs, a director, catering. The compiled SDK is like using your phone camera. Same photo, 99% less equipment.
+
+**Why it matters at scale:**  
+An agent running 100 concurrent tasks using raw Playwright needs to keep 100 Chromium browser instances alive — each consuming ~150 MB. That's 15 GB of RAM just for the browser processes, before your agent logic even runs. With compiled SDKs making direct API calls, 100 concurrent tasks use trivial memory.
+
+---
+
+### Self-Healing Speed (1,648 ms)
+
+**What this measures:**  
+When a website changes and a selector breaks, how long does it take Shiny Fishstick to detect and fix it automatically?
+
+**The analogy:**  
+Without self-healing, a broken selector is like a GPS that gives you directions to a building that has since moved — it just tells you to turn into a field, and someone has to manually update the map. Shiny Fishstick's reconciler is like a GPS that notices the building moved, re-scans the area, and updates its own map in 1.6 seconds.
+
+**What 1,648 ms includes:**  
+Launching a Playwright browser, navigating to the live page, scoring all candidate selectors for similarity to the stored one, writing the result back to the database. On a cron schedule or CI trigger, this runs automatically with no human involvement.
+
