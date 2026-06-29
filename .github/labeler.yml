@@ -1,0 +1,30 @@
+# Area labels
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'backend/**/*'
+
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'frontend/**/*'
+
+shared:
+  - changed-files:
+    - any-glob-to-any-file: 'shared/**/*'
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'SECURITY.md'
+      - 'BENCHMARKS.md'
+      - 'docs/**/*'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/workflows/**/*'
+      - '.github/ISSUE_TEMPLATE/**/*'
+      - '.github/pull_request_template.md'
+      - '.github/dependabot.yml'
