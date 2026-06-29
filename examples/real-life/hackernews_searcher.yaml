@@ -1,0 +1,15 @@
+version: 1.0.0
+site: https://news.ycombinator.com
+actions:
+  search_items:
+    description: Filters HN search dashboard posts
+    action_type: browser
+    selector: "input[name='q']"
+    parameters:
+      - name: query
+        type: string
+        required: true
+        selector: "input[name='q']"
+    assertions:
+      - type: visible
+        selector: ".storylink, .Search_results"

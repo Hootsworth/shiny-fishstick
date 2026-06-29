@@ -1,0 +1,36 @@
+version: 1.0.0
+site: https://github.com
+actions:
+  login:
+    description: Authenticates user to GitHub dashboard
+    action_type: browser
+    selector: "a[href='/login']"
+    parameters:
+      - name: email
+        type: string
+        required: true
+        selector: "#login_field"
+      - name: password
+        type: string
+        required: true
+        selector: "#password"
+    assertions:
+      - type: visible
+        selector: ".logged-in"
+
+  create_issue:
+    description: Opens a new issue in a target repository
+    action_type: browser
+    selector: "a[href*='/issues/new']"
+    parameters:
+      - name: title
+        type: string
+        required: true
+        selector: "#issue_title"
+      - name: body
+        type: string
+        required: false
+        selector: "#issue_body"
+    assertions:
+      - type: visible
+        selector: ".gh-header-title"

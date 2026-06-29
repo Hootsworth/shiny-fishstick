@@ -1,0 +1,31 @@
+version: 1.0.0
+site: https://checkout.stripe.com
+actions:
+  fill_payment_details:
+    description: Fills Stripe card credentials payment form
+    action_type: browser
+    selector: "#submit-pay-button"
+    parameters:
+      - name: email
+        type: string
+        required: true
+        selector: "#email"
+      - name: card_number
+        type: string
+        required: true
+        selector: "#cardNumber"
+      - name: expiration
+        type: string
+        required: true
+        selector: "#cardExpiry"
+      - name: cvc
+        type: string
+        required: true
+        selector: "#cardCvc"
+      - name: cardholder_name
+        type: string
+        required: true
+        selector: "#billingName"
+    assertions:
+      - type: visible
+        selector: ".SubmitButton-IconContainer"
