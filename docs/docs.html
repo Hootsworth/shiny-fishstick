@@ -7,32 +7,34 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- DESIGN SYSTEM TOKENS (DESIGN.md REALIGNMENT) --- */
+        /* --- DESIGN SYSTEM TOKENS (HTTPie-style Flow) --- */
         :root {
-            --color-primary: #cc785c;
-            --color-primary-active: #a9583e;
-            --color-ink: #141413;
-            --color-body: #3d3d3a;
-            --color-muted: #6c6a64;
-            --color-muted-soft: #8e8b82;
-            --color-hairline: #e6dfd8;
-            --color-canvas: #faf9f5;
-            --color-surface-soft: #f5f0e8;
-            --color-surface-card: #efe9de;
-            --color-surface-dark: #181715;
-            --color-surface-dark-elevated: #252320;
-            --color-surface-dark-soft: #1f1e1b;
-            --color-on-primary: #ffffff;
-            --color-on-dark: #faf9f5;
-            --color-on-dark-soft: #a09d96;
+            /* Colors */
+            --color-primary: #3DD56D;
+            --color-primary-active: #1F9E4D;
+            --color-ink: #16171A;
+            --color-body: #46474C;
+            --color-muted: #6C6D70;
+            --color-muted-soft: #A4A5AA;
+            --color-hairline: #E4E3DC;
+            --color-canvas: #F5F5F0;
+            --color-surface-soft: #FFFFFF;
+            --color-surface-card: #FFFFFF;
+            --color-surface-dark: #101113;
+            --color-surface-dark-elevated: #16171A;
+            --color-surface-dark-soft: #1D1F23;
+            --color-on-primary: #16171A;
+            --color-on-dark: #F5F5F0;
+            --color-on-dark-soft: #A4A5AA;
             
-            --font-display: 'Cormorant Garamond', Garamond, serif;
-            --font-body: 'Inter', sans-serif;
+            /* Typography */
+            --font-display: 'Archivo', system-ui, sans-serif;
+            --font-body: 'Archivo', system-ui, sans-serif;
             --font-code: 'JetBrains Mono', monospace;
-            --max-width: 1200px;
+            --max-width: 1180px;
         }
 
         * {
@@ -45,8 +47,9 @@
             background-color: var(--color-canvas);
             color: var(--color-ink);
             font-family: var(--font-body);
-            line-height: 1.55;
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         a {
@@ -157,21 +160,25 @@
 
         h1 {
             font-family: var(--font-display);
-            font-weight: 400;
-            font-size: 48px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 44px;
             margin-bottom: 16px;
-            letter-spacing: -1px;
+            letter-spacing: -0.02em;
+            line-height: 0.95;
         }
 
         h2 {
             font-family: var(--font-display);
-            font-weight: 400;
-            font-size: 32px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 28px;
             margin-bottom: 20px;
             border-bottom: 1px solid var(--color-hairline);
             padding-bottom: 8px;
             margin-top: 40px;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.02em;
+            line-height: 0.95;
         }
 
         h3 {
