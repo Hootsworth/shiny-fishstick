@@ -2,12 +2,34 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![CI Status](https://github.com/Hootsworth/shiny-fishstick/actions/workflows/ci.yml/badge.svg)](https://github.com/Hootsworth/shiny-fishstick/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](https://github.com/Hootsworth/shiny-fishstick/releases/tag/v0.1.0-alpha)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](backend/)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-green.svg)](frontend/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-purple.svg)](examples/mcp-agent/)
 
 > **Compile websites into semantic SDKs and MCP servers for AI agents.**  
 > *Because agents shouldn't have to parse raw HTML, guess CSS selectors, or crash when a button gets renamed.*
+
+---
+
+## Table of Contents
+
+- [The Problem](#the-problem)
+- [The Solution](#the-solution)
+- [Quick Start](#quick-start)
+- [How It Works](#how-it-works)
+- [The `preflight.yaml` Format](#the-preflightyaml-format)
+- [Benchmarks](#benchmarks)
+- [Features](#features)
+- [Dashboard](#dashboard)
+- [CLI Reference](#cli-reference)
+- [Examples](#examples)
+- [vs. Everything Else](#vs-everything-else)
+- [FAQ](#faq)
+- [Architecture & Design](#architecture--design)
+- [The Vision](#the-vision)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -61,12 +83,17 @@ await site.checkout()
 
 ## Quick Start
 
-**Requirements:** Python 3.9+, Node.js 18+
+**Prerequisites:**
+- Python 3.9+
+- Node.js 18+
+- Docker & Docker Compose *(optional — for containerised setup)*
+- Playwright browsers: `playwright install chromium`
 
 ```bash
-# Clone and set up in one shot
+# Clone and set up
 git clone git@github.com:Hootsworth/shiny-fishstick.git
 cd shiny-fishstick
+cp .env.example .env          # configure API keys, DB path, etc.
 make setup
 
 # Run the live demo — crawls a local mock store, generates all SDKs
@@ -326,6 +353,30 @@ The state reconciler compares selector similarity across environments. When drif
 
 **Can I use the compiled spec without the dashboard?**  
 Yes, the CLI is fully standalone. The dashboard is optional.
+
+---
+
+## Architecture & Design
+
+For deeper technical detail on the system internals:
+
+- **[architecture.md](architecture.md)** — pipeline stages, data flow, module boundaries
+- **[design.md](design.md)** — design system tokens, UI component guidelines
+- **[SECURITY.md](SECURITY.md)** — vulnerability reporting and sensitive data handling
+
+---
+
+## Built With
+
+| Layer | Technology |
+|---|---|
+| Crawler & browser automation | [Playwright](https://playwright.dev/) + [playwright-stealth](https://github.com/nickmilo/playwright_stealth) |
+| Backend API | [FastAPI](https://fastapi.tiangolo.com/) |
+| Database | SQLite + [SQLAlchemy](https://www.sqlalchemy.org/) + [Alembic](https://alembic.sqlalchemy.org/) |
+| Frontend dashboard | [Next.js](https://nextjs.org/) 15 + React 19 |
+| Structured logging | [structlog](https://www.structlog.org/) |
+| Linting | [Ruff](https://docs.astral.sh/ruff/) |
+| AI intent classification | OpenAI / [Ollama](https://ollama.ai/) (offline) |
 
 ---
 

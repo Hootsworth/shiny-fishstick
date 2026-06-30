@@ -5,7 +5,17 @@ from playwright.async_api import Page as PlaywrightPage
 from playwright.async_api import Request as PlaywrightRequest
 from sqlalchemy.orm import Session
 
+from ..core.logging import log
 from ..models.db_models import Action
+
+# --- Constants ---
+STATIC_ASSET_EXTENSIONS = {
+    ".js", ".css", ".png", ".jpg", ".jpeg", ".html", ".ico",
+    ".woff", ".woff2", ".ttf", ".svg", ".gif", ".webp",
+}
+AUTH_HEADER_NAMES = {
+    "authorization", "x-auth-token", "x-api-key", "token", "jwt", "x-csrf-token",
+}
 
 
 class APIDiscoveryService:
@@ -22,11 +32,11 @@ class APIDiscoveryService:
     def start_recording(self, action_name: str, inputs: dict):
         self.current_action = action_name
         self.action_inputs = inputs
-        print(f"[API Discovery] Started recording for action '{action_name}' with inputs: {inputs}")
+        log.info("api_disco_recording_started", action=action_name, inputs=inputs)
 
     def stop_recording(self):
         if self.current_action:
-            print(f"[API Discovery] Stopped recording for action '{self.current_action}'")
+            log.info("api_disco_recording_stopped", action=self.current_action)
         self.current_action = None
         self.action_inputs = {}
 
@@ -47,7 +57,7 @@ class APIDiscoveryService:
                 # Sniff for auth headers
                 auth_headers = {}
                 for k, v in headers.items():
-                    if k.lower() in ["authorization", "x-auth-token", "x-api-key", "token", "jwt"]:
+                    if k.lower() in AUTH_HEADER_NAMES:
                         auth_headers[k] = v
 
                 self.captured_requests.append({
@@ -60,7 +70,7 @@ class APIDiscoveryService:
                     "auth_headers": auth_headers
                 })
         except Exception as e:
-            print(f"Error capturing request: {e}")
+            log.error("api_disco_request_capture_failed", error=str(e))
 
     async def save_discovered_apis(self, db: Session, crawl_id: str):
         # Fetch actions for the project
@@ -72,14 +82,14 @@ class APIDiscoveryService:
             if not reqs:
                 continue
 
-            print(f"[API Discovery] Found {len(reqs)} captured request(s) for action '{action.name}'")
+            log.info("api_disco_requests_found", action=action.name, count=len(reqs))
 
             # Select the most likely API candidate request (prefer non-GET, or JSON/form-containing if available)
             candidate = None
             for r in reqs:
                 parsed_url = urlparse(r["url"])
                 # Avoid static assets
-                if any(ext in parsed_url.path.lower() for ext in [".js", ".css", ".png", ".jpg", ".html", ".ico", ".woff"]):
+                if any(parsed_url.path.lower().endswith(ext) for ext in STATIC_ASSET_EXTENSIONS):
                     continue
                 # Prefer write methods
                 if r["method"] in ["POST", "PUT", "PATCH", "DELETE"]:
@@ -96,7 +106,7 @@ class APIDiscoveryService:
             method = candidate["method"]
             body_str = candidate["body"]
 
-            print(f"[API Discovery] Selected candidate for action '{action.name}': {method} {path}")
+            log.info("api_disco_candidate_selected", action=action.name, method=method, path=path)
 
             # Now, map action parameters to the request payload
             existing_params = []
@@ -178,7 +188,7 @@ class APIDiscoveryService:
                 for k, v in body_json.items():
                     already_mapped = any(p.get("source") == f"body.{k}" for p in mapped_params)
                     if not already_mapped:
-                        val_type = "integer" if isinstance(v, int) else "string"
+                        val_type = "number" if isinstance(v, (int, float)) else "boolean" if isinstance(v, bool) else "string"
                         mapped_params.append({
                             "name": k,
                             "type": val_type,
@@ -263,4 +273,4 @@ class APIDiscoveryService:
             action.api_method = method
             action.parameters = json.dumps(mapped_params)
             db.commit()
-            print(f"[API Discovery] Upgraded action '{action.name}' to API action: {method} {path} with params {mapped_params}")
+            log.info("api_disco_action_upgraded", action=action.name, method=method, path=path, param_count=len(mapped_params))

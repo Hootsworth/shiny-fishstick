@@ -2,6 +2,8 @@ import asyncio
 import json
 import os
 import re
+from collections import deque
+from datetime import datetime, timezone
 from typing import List, Optional, Set
 from urllib.parse import urljoin, urlparse
 
@@ -27,9 +29,10 @@ class CrawlerService:
         self.root_url = root_url
         self.parsed_root = urlparse(root_url)
         self.visited_urls: Set[str] = set()
-        self.pages_to_visit: List[str] = [root_url]
+        self.pages_to_visit = deque([root_url])
         self.max_pages = 15
         self.max_depth = 3
+        self.url_depths: dict[str, int] = {root_url: 0}
         self.agent_id = agent_id
         self.all_discovered_elements = []
 
@@ -163,6 +166,7 @@ class CrawlerService:
         crawl_obj = self.db.query(Crawl).filter(Crawl.id == self.crawl_id).first()
         if crawl_obj:
             crawl_obj.status = "running"
+            crawl_obj.started_at = datetime.now(timezone.utc)
             self.db.commit()
 
         try:
@@ -249,11 +253,16 @@ class CrawlerService:
                                         "urls": discovered_links
                                     })
                 else:
-                    # Single Node Mode
+                    # Single Node Mode — BFS with depth tracking
                     while self.pages_to_visit and len(self.visited_urls) < self.max_pages:
-                        current_url = self.pages_to_visit.pop(0)
+                        current_url = self.pages_to_visit.popleft()
                         current_base = current_url.split("?")[0].split("#")[0]
                         if current_base in self.visited_urls:
+                            continue
+
+                        current_depth = self.url_depths.get(current_url, 0)
+                        if current_depth > self.max_depth:
+                            log.info("crawler_depth_limit", url=current_url, depth=current_depth, max_depth=self.max_depth)
                             continue
 
                         discovered_links = await self.crawl_page(page, current_url, api_disco)
@@ -261,6 +270,8 @@ class CrawlerService:
                             link_base = link.split("?")[0].split("#")[0]
                             if link_base not in self.visited_urls and link not in self.pages_to_visit:
                                 self.pages_to_visit.append(link)
+                                if link not in self.url_depths:
+                                    self.url_depths[link] = current_depth + 1
 
                 log.info("crawler_extraction_complete", count=len(self.all_discovered_elements))
                 intent_service = SemanticIntentService(self.db, self.project_id)
@@ -270,6 +281,7 @@ class CrawlerService:
                 await browser.close()
 
             crawl_obj.status = "completed"
+            crawl_obj.completed_at = datetime.now(timezone.utc)
             self.db.commit()
             log.info("crawler_pipeline_completed")
 

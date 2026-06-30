@@ -1,24 +1,49 @@
 # Python
 venv/
 *.pyc
+*.pyo
+*.pyd
 __pycache__/
 instance/
 .pytest_cache/
 .env
+*.egg-info/
+dist/
+.eggs/
+.mypy_cache/
+.tox/
+.nox/
+htmlcov/
 
 # Database
 *.db
 *.db-journal
+*.sqlite3
 
 # Node / NextJS
 node_modules/
 .next/
 out/
 build/
+.env.local
+.env.*.local
 
 # OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Linting & Coverage
+.ruff_cache/
+.coverage
+
+# Logs & Temp
+*.log
+*.swp
+*.swo
 
 # Encryption Key
 .encryption.key
-.coverage
