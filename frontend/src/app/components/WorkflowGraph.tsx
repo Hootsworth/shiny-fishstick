@@ -95,15 +95,15 @@ export function WorkflowGraph({ workflows, actions, onWorkflowsUpdated }: Workfl
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
-          <Workflow className="h-8 w-8" />
-          STATE MACHINES
+        <h2 className="display-title text-2xl flex items-center gap-3 text-[var(--ink)]">
+          <Workflow className="h-7 w-7 text-[var(--pie-green-deep)]" />
+          <span>FSM Workflow Graph</span>
         </h2>
-        <p className="text-gray-600 font-medium mt-2">Sequential step logic mapped for agents.</p>
+        <p className="text-[var(--ink-soft)] text-xs font-semibold mt-1">Sequential step logic transition graphs mapped for agents.</p>
       </div>
 
       {message && (
-        <div className="bg-pink-100 border-2 border-black p-4 font-bold text-sm uppercase tracking-wide">
+        <div className="bg-[var(--paper)] border border-[var(--pie-green)] p-4 rounded-xl text-xs font-semibold text-[var(--ink)] shadow-sm">
           {message}
         </div>
       )}
@@ -112,75 +112,75 @@ export function WorkflowGraph({ workflows, actions, onWorkflowsUpdated }: Workfl
         const isEditing = editingWfId === wf.id;
 
         return (
-          <div key={wf.id} className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-8">
+          <div key={wf.id} className="bg-[var(--paper)] border border-[var(--line)] rounded-[24px] p-8 shadow-sm">
             {isEditing ? (
               // EDIT PANEL
               <div className="space-y-6">
-                <div className="flex justify-between items-start gap-4">
-                  <div className="space-y-4 flex-grow max-w-xl">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div className="space-y-4 flex-grow max-w-xl w-full">
                     <div>
-                      <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Workflow Name</label>
+                      <label className="block text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-1">Workflow Name</label>
                       <input
                         type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="w-full border-2 border-black p-2 font-bold focus:outline-none focus:ring-0 focus:border-pink-500"
+                        className="w-full bg-[var(--cream)] border border-[var(--line)] rounded-full px-4 py-2 text-xs font-semibold text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--pie-green)]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Description</label>
+                      <label className="block text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-1">Description</label>
                       <textarea
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
-                        className="w-full border-2 border-black p-2 font-bold focus:outline-none focus:ring-0 focus:border-pink-500"
+                        className="w-full bg-[var(--cream)] border border-[var(--line)] rounded-[16px] p-4 text-xs font-semibold text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--pie-green)]"
                         rows={2}
                       />
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full md:w-auto">
                     <button
                       onClick={saveWorkflow}
                       disabled={saving}
-                      className="bg-green-400 hover:bg-green-500 border-2 border-black font-black p-3 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      className="w-full md:w-auto bg-[var(--ink)] hover:bg-[var(--pie-green)] hover:text-[var(--ink)] text-[var(--cream)] border border-[var(--line)] font-bold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-2"
                     >
                       <Save className="h-4 w-4" />
-                      {saving ? 'Saving...' : 'Save'}
+                      <span>{saving ? 'Saving...' : 'Save'}</span>
                     </button>
                     <button
                       onClick={cancelEditing}
-                      className="bg-gray-100 hover:bg-gray-200 border-2 border-black font-black p-3 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      className="w-full md:w-auto bg-[var(--paper)] text-[var(--ink)] border border-[var(--line)] font-bold px-5 py-2.5 rounded-full text-xs uppercase tracking-wider hover:bg-[var(--cream)] transition shadow-sm flex items-center justify-center gap-2"
                     >
                       <X className="h-4 w-4" />
-                      Cancel
+                      <span>Cancel</span>
                     </button>
                   </div>
                 </div>
 
                 {/* EDIT STEPS CANVAS */}
-                <div className="border-t-2 border-gray-100 pt-6 space-y-4">
+                <div className="border-t border-[var(--line)] pt-6 space-y-4">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-sm font-black text-gray-500 uppercase tracking-widest">Workflow Transition Steps</h4>
+                    <h4 className="text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider">Workflow Transition Steps</h4>
                     <button
                       onClick={addStep}
-                      className="bg-pink-200 hover:bg-pink-300 border-2 border-black font-black px-3 py-1.5 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      className="bg-[var(--paper)] text-[var(--ink)] border border-[var(--line)] font-bold px-4 py-2 rounded-full text-[10px] uppercase tracking-wider hover:bg-[var(--cream)] transition shadow-sm flex items-center gap-2"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-4 w-4 text-[var(--pie-green-deep)]" />
                       Add Step
                     </button>
                   </div>
 
                   <div className="space-y-3">
                     {editSteps.map((step, idx) => (
-                      <div key={idx} className="flex flex-col md:flex-row items-center gap-3 bg-gray-50 border-2 border-black p-4">
-                        <span className="font-black text-sm uppercase px-2 py-1 bg-pink-100 border border-pink-300">Step {idx + 1}</span>
+                      <div key={idx} className="flex flex-col lg:flex-row items-center gap-3 bg-[var(--cream)] border border-[var(--line)] p-4 rounded-[16px]">
+                        <span className="font-bold text-[10px] uppercase px-3 py-1 bg-[var(--paper)] border border-[var(--line)] rounded-full text-[var(--ink)]">Step {idx + 1}</span>
                         
                         <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
                           <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Action</label>
+                            <label className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-0.5">Action</label>
                             <select
                               value={step.action}
                               onChange={(e) => handleStepChange(idx, 'action', e.target.value)}
-                              className="w-full bg-white border border-gray-300 p-1.5 font-bold text-sm focus:outline-none focus:border-black"
+                              className="w-full bg-[var(--paper)] border border-[var(--line)] rounded-full px-3 py-1.5 text-xs font-semibold text-[var(--ink)] focus:outline-none"
                             >
                               {actions.map((act) => (
                                 <option key={act.id} value={act.name}>{act.name} ({act.action_type})</option>
@@ -188,47 +188,47 @@ export function WorkflowGraph({ workflows, actions, onWorkflowsUpdated }: Workfl
                             </select>
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Source Page</label>
+                            <label className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-0.5">Source Route</label>
                             <input
                               type="text"
                               value={step.source_page}
                               onChange={(e) => handleStepChange(idx, 'source_page', e.target.value)}
                               placeholder="/"
-                              className="w-full border border-gray-300 p-1.5 font-mono text-sm focus:outline-none focus:border-black"
+                              className="w-full bg-[var(--paper)] border border-[var(--line)] rounded-full px-3 py-1.5 text-xs font-mono text-[var(--ink)] focus:outline-none"
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Target Page</label>
+                            <label className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-0.5">Target Route</label>
                             <input
                               type="text"
                               value={step.target_page}
                               onChange={(e) => handleStepChange(idx, 'target_page', e.target.value)}
                               placeholder="/"
-                              className="w-full border border-gray-300 p-1.5 font-mono text-sm focus:outline-none focus:border-black"
+                              className="w-full bg-[var(--paper)] border border-[var(--line)] rounded-full px-3 py-1.5 text-xs font-mono text-[var(--ink)] focus:outline-none"
                             />
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 md:self-end mt-2 md:mt-0">
+                        <div className="flex items-center gap-1 mt-2 lg:mt-0 lg:self-end">
                           <button
                             onClick={() => moveStep(idx, 'up')}
                             disabled={idx === 0}
-                            className="p-1.5 border border-black bg-white hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-white"
+                            className="p-2 border border-[var(--line)] bg-[var(--paper)] rounded-full text-[var(--ink)] hover:bg-[var(--cream)] disabled:opacity-30"
                           >
-                            <ArrowUp className="h-4 w-4" />
+                            <ArrowUp className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => moveStep(idx, 'down')}
                             disabled={idx === editSteps.length - 1}
-                            className="p-1.5 border border-black bg-white hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-white"
+                            className="p-2 border border-[var(--line)] bg-[var(--paper)] rounded-full text-[var(--ink)] hover:bg-[var(--cream)] disabled:opacity-30"
                           >
-                            <ArrowDown className="h-4 w-4" />
+                            <ArrowDown className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => removeStep(idx)}
-                            className="p-1.5 border border-black bg-red-100 hover:bg-red-200 text-red-700"
+                            className="p-2 border border-[var(--line)] bg-red-50 hover:bg-red-100 rounded-full text-red-600"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
@@ -239,37 +239,37 @@ export function WorkflowGraph({ workflows, actions, onWorkflowsUpdated }: Workfl
             ) : (
               // READ-ONLY DISPLAY CANVAS
               <div>
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h3 className="text-xl font-black uppercase mb-2">{wf.name}</h3>
-                    <p className="text-gray-600 font-medium">{wf.description}</p>
+                    <h3 className="font-extrabold text-lg uppercase tracking-tight text-[var(--ink)] mb-1">{wf.name}</h3>
+                    <p className="text-[var(--ink-soft)] text-xs font-medium leading-relaxed">{wf.description}</p>
                   </div>
                   <button
                     onClick={() => startEditing(wf)}
-                    className="bg-yellow-200 hover:bg-yellow-300 border-2 border-black font-black px-4 py-2 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                    className="bg-[var(--cream)] hover:bg-opacity-85 text-[var(--ink)] border border-[var(--line)] font-bold px-4 py-2 rounded-full text-xs uppercase tracking-wider transition shadow-sm flex items-center gap-2"
                   >
-                    <Edit2 className="h-4 w-4" />
-                    Edit Flow
+                    <Edit2 className="h-3.5 w-3.5" />
+                    <span>Edit Flow</span>
                   </button>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative mt-10">
                   {wf.steps.map((step, index) => (
                     <React.Fragment key={index}>
-                      <div className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_#f472b6] p-6 w-full md:w-64 text-center relative z-10">
-                        <div className="text-xs font-black text-pink-500 uppercase tracking-widest bg-pink-50 inline-block px-2 py-1 border border-pink-200 mb-3">
+                      <div className="bg-[var(--cream)] border border-[var(--line)] rounded-[24px] p-6 w-full md:w-64 text-center relative z-10 hover:border-[var(--pie-green)] transition duration-200">
+                        <div className="text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider bg-[var(--paper)] border border-[var(--line)] rounded-full inline-block px-3 py-1 mb-3">
                           Step {index + 1}
                         </div>
-                        <div className="font-black text-lg uppercase mb-4">{step.action}</div>
-                        <div className="text-xs font-bold text-gray-500 flex justify-between border-t-2 border-gray-100 pt-3">
-                          <span className="bg-gray-100 px-1">{step.source_page}</span>
-                          <ChevronRight className="h-4 w-4 text-black mx-1" />
-                          <span className="bg-gray-100 px-1">{step.target_page}</span>
+                        <div className="font-extrabold text-sm uppercase mb-4 text-[var(--ink)] tracking-tight">{step.action}</div>
+                        <div className="text-[10px] font-bold text-[var(--ink-soft)] flex justify-between border-t border-[var(--line)] pt-3">
+                          <span className="bg-[var(--paper)] px-2 py-0.5 rounded-full border border-[var(--line)] font-mono">{step.source_page}</span>
+                          <ChevronRight className="h-3.5 w-3.5 text-[var(--ink-soft)] mx-1 self-center" />
+                          <span className="bg-[var(--paper)] px-2 py-0.5 rounded-full border border-[var(--line)] font-mono">{step.target_page}</span>
                         </div>
                       </div>
                       {index < wf.steps.length - 1 && (
-                        <div className="hidden md:block flex-grow border-t-4 border-dashed border-black relative top-0 mx-2">
-                          <span className="absolute -right-2 -top-2.5 h-4 w-4 bg-white border-2 border-black rotate-45"></span>
+                        <div className="hidden md:block flex-grow border-t-2 border-dashed border-[var(--line)] relative top-0 mx-2">
+                          <span className="absolute -right-1 -top-1.5 h-3 w-3 bg-[var(--paper)] border border-[var(--line)] rounded-full"></span>
                         </div>
                       )}
                     </React.Fragment>

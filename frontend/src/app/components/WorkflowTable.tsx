@@ -105,7 +105,6 @@ export function WorkflowTable({ projectId, actions, onActionsUpdated }: Workflow
       const params = JSON.parse(act.parameters || "[]");
       params.forEach((p: any) => {
         if (p.name !== "_frame_selector") {
-          // prefill default values
           if (act.name === 'login') {
             initialParams[p.name] = p.name === 'email' ? 'admin@example.com' : 'password123';
           } else if (act.name === 'search_products') {
@@ -143,15 +142,15 @@ export function WorkflowTable({ projectId, actions, onActionsUpdated }: Workflow
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
-          <Compass className="h-8 w-8" />
-          ACTION DICTIONARY
+        <h2 className="display-title text-2xl flex items-center gap-3 text-[var(--ink)]">
+          <Compass className="h-7 w-7 text-[var(--pie-green-deep)]" />
+          <span>Action Explorer</span>
         </h2>
-        <p className="text-gray-600 font-medium mt-2">Classified DOM elements and agent intents.</p>
+        <p className="text-[var(--ink-soft)] text-xs font-semibold mt-1">Classified elements, DOM selectors, and semantic intents.</p>
       </div>
 
       {message && (
-        <div className="bg-pink-100 border-2 border-black p-4 font-bold text-sm uppercase tracking-wide">
+        <div className="bg-[var(--paper)] border border-[var(--pie-green)] p-4 rounded-xl text-xs font-semibold text-[var(--ink)] shadow-sm">
           {message}
         </div>
       )}
@@ -176,53 +175,54 @@ export function WorkflowTable({ projectId, actions, onActionsUpdated }: Workflow
           const isTesting = testingActionId === act.id;
 
           return (
-            <div key={act.id} className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-6">
-              <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b-2 border-gray-100 pb-4">
+            <div key={act.id} className="bg-[var(--paper)] border border-[var(--line)] rounded-[24px] p-6 shadow-sm">
+              <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-[var(--line)] pb-4">
                 <div>
                   <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-black uppercase">{act.name}</h3>
-                    <span className={`px-3 py-1 border-2 border-black font-bold text-xs uppercase tracking-wider ${act.action_type === 'api' ? 'bg-pink-200' : 'bg-gray-100'}`}>
+                    <h3 className="font-extrabold text-sm uppercase tracking-tight text-[var(--ink)]">{act.name}</h3>
+                    <span className={`px-3 py-0.5 rounded-full border border-[var(--line)] font-bold text-[10px] uppercase tracking-wider ${act.action_type === 'api' ? 'bg-[var(--pie-green)] text-[var(--ink)]' : 'bg-[var(--cream)] text-[var(--ink-soft)]'}`}>
                       {act.action_type}
                     </span>
                   </div>
-                  <p className="text-gray-600 font-medium mt-2">{act.description}</p>
+                  <p className="text-[var(--ink-soft)] text-xs font-medium mt-1 leading-relaxed">{act.description}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right mr-2">
-                    <span className="block text-xs font-bold text-gray-500 uppercase tracking-widest">Confidence</span>
-                    <strong className="text-2xl font-black">{(act.confidence_score * 100).toFixed(0)}%</strong>
+                
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <span className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider">Confidence</span>
+                    <strong className="text-xl font-extrabold text-[var(--ink)] tracking-tight">{(act.confidence_score * 100).toFixed(0)}%</strong>
                   </div>
                   {!isEditing && !isTesting && (
-                    <>
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => startEditing(act)}
-                        className="bg-yellow-200 hover:bg-yellow-300 border-2 border-black font-black px-3 py-1.5 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        className="bg-[var(--cream)] hover:bg-opacity-80 text-[var(--ink)] border border-[var(--line)] font-bold px-4 py-2 rounded-full text-xs uppercase tracking-wider transition shadow-sm flex items-center gap-1.5"
                       >
-                        <Edit2 className="h-4 w-4" />
-                        Assertions
+                        <Plus className="h-3.5 w-3.5 text-[var(--pie-green-deep)]" />
+                        <span>Assertions</span>
                       </button>
                       <button
                         onClick={() => startTesting(act)}
-                        className="bg-pink-200 hover:bg-pink-300 border-2 border-black font-black px-3 py-1.5 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        className="bg-[var(--ink)] hover:bg-[var(--pie-green)] hover:text-[var(--ink)] text-[var(--cream)] border border-[var(--line)] font-bold px-4 py-2 rounded-full text-xs uppercase tracking-wider transition shadow-sm flex items-center gap-1.5"
                       >
-                        <Play className="h-4 w-4" />
-                        Playground
+                        <Play className="h-3.5 w-3.5 fill-current" />
+                        <span>Test Run</span>
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
 
+              {/* ACTION EDIT MODE: ASSERTION CONFIGURATION */}
               {isEditing && (
-                // EDIT ASSERTIONS PANEL
-                <div className="mt-6 bg-gray-50 border-2 border-black p-4 space-y-4">
+                <div className="mt-6 bg-[var(--cream)] border border-[var(--line)] rounded-[20px] p-6 space-y-4">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-sm font-black uppercase tracking-widest text-pink-500">Edit E2E Test Assertions</h4>
+                    <h4 className="text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider">Configure E2E Validation Assertions</h4>
                     <button
                       onClick={addAssertion}
-                      className="bg-pink-200 hover:bg-pink-300 border-2 border-black font-black px-3 py-1 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      className="bg-[var(--paper)] text-[var(--ink)] border border-[var(--line)] font-bold px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider hover:bg-[var(--cream)] transition shadow-sm flex items-center gap-1.5"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3.5 w-3.5 text-[var(--pie-green-deep)]" />
                       Add Assertion
                     </button>
                   </div>
@@ -230,13 +230,13 @@ export function WorkflowTable({ projectId, actions, onActionsUpdated }: Workflow
                   {editAssertions.length > 0 ? (
                     <div className="space-y-3">
                       {editAssertions.map((assert, idx) => (
-                        <div key={idx} className="flex flex-col md:flex-row items-center gap-3 bg-white border border-gray-300 p-3">
+                        <div key={idx} className="flex flex-col md:flex-row items-center gap-3 bg-[var(--paper)] border border-[var(--line)] p-4 rounded-[16px] shadow-inner">
                           <div className="w-full md:w-48">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Type</label>
+                            <label className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-1">Check Type</label>
                             <select
                               value={assert.type}
                               onChange={(e) => handleAssertionChange(idx, 'type', e.target.value as any)}
-                              className="w-full border border-gray-300 p-1 font-bold text-sm focus:outline-none focus:border-black"
+                              className="w-full bg-[var(--cream)] border border-[var(--line)] rounded-full px-3 py-1.5 text-xs text-[var(--ink)] focus:outline-none"
                             >
                               <option value="visible">Is Visible</option>
                               <option value="not_visible">Is Not Visible</option>
@@ -246,30 +246,30 @@ export function WorkflowTable({ projectId, actions, onActionsUpdated }: Workflow
                           </div>
                           
                           <div className="flex-grow w-full">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Selector</label>
+                            <label className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-1">Target Selector</label>
                             <input
                               type="text"
                               value={assert.selector || ''}
                               onChange={(e) => handleAssertionChange(idx, 'selector', e.target.value)}
                               placeholder="e.g. #welcome-banner"
-                              className="w-full border border-gray-300 p-1 font-mono text-sm focus:outline-none focus:border-black"
+                              className="w-full bg-[var(--cream)] border border-[var(--line)] rounded-full px-4 py-1.5 text-xs font-mono text-[var(--ink)] focus:outline-none"
                             />
                           </div>
 
                           <div className="flex-grow w-full">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Value (Expected)</label>
+                            <label className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-1">Expected Value</label>
                             <input
                               type="text"
                               value={assert.value || ''}
                               onChange={(e) => handleAssertionChange(idx, 'value', e.target.value)}
-                              placeholder="e.g. admin"
-                              className="w-full border border-gray-300 p-1 text-sm focus:outline-none focus:border-black"
+                              placeholder="e.g. Success banner text"
+                              className="w-full bg-[var(--cream)] border border-[var(--line)] rounded-full px-4 py-1.5 text-xs text-[var(--ink)] focus:outline-none"
                             />
                           </div>
 
                           <button
                             onClick={() => removeAssertion(idx)}
-                            className="p-2 border border-black bg-red-50 hover:bg-red-100 text-red-700 md:self-end"
+                            className="p-2 border border-[var(--line)] bg-red-50 hover:bg-red-100 rounded-full text-red-600 md:self-end mt-2 md:mt-0"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -277,139 +277,139 @@ export function WorkflowTable({ projectId, actions, onActionsUpdated }: Workflow
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm font-medium text-gray-500 italic">No assertions set for this action.</p>
+                    <p className="text-xs text-[var(--ink-soft)] italic">No assertions configured. Add one to run visual validation checks.</p>
                   )}
 
-                  <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
+                  <div className="flex justify-end gap-2 border-t border-[var(--line)] pt-3">
                     <button
                       onClick={() => saveAssertions(act.id)}
                       disabled={saving}
-                      className="bg-green-400 hover:bg-green-500 border-2 border-black font-black px-4 py-1.5 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      className="bg-[var(--ink)] hover:bg-[var(--pie-green)] hover:text-[var(--ink)] text-[var(--cream)] border border-[var(--line)] font-bold px-4 py-2 rounded-full text-[10px] uppercase tracking-wider transition shadow-sm flex items-center gap-1.5"
                     >
-                      <Save className="h-4 w-4" />
-                      {saving ? 'Saving...' : 'Save Assertions'}
+                      <Save className="h-3.5 w-3.5" />
+                      <span>{saving ? 'Saving...' : 'Save assertions'}</span>
                     </button>
                     <button
                       onClick={cancelEditing}
-                      className="bg-white hover:bg-gray-100 border-2 border-black font-black px-4 py-1.5 flex items-center gap-2 uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      className="bg-[var(--paper)] text-[var(--ink)] border border-[var(--line)] font-bold px-4 py-2 rounded-full text-[10px] uppercase tracking-wider hover:bg-[var(--cream)] transition shadow-sm flex items-center gap-1.5"
                     >
-                      <X className="h-4 w-4" />
-                      Cancel
+                      <X className="h-3.5 w-3.5" />
+                      <span>Cancel</span>
                     </button>
                   </div>
                 </div>
               )}
 
+              {/* ACTION TEST RUN PLAYGROUND */}
               {isTesting && (
-                // PLAYGROUND DEBUGGER PANEL
-                <div className="mt-6 bg-gray-900 text-white border-2 border-black p-6 space-y-6">
-                  <div className="flex justify-between items-center border-b border-gray-800 pb-3">
-                    <h4 className="text-sm font-black uppercase tracking-widest text-pink-400">Playground Sandbox Run</h4>
-                    <button onClick={() => setTestingActionId(null)} className="text-gray-400 hover:text-white">
-                      <X className="h-5 w-5" />
+                <div className="mt-6 bg-[var(--code-bg)] text-[var(--code-text)] border border-[var(--line)] rounded-[20px] p-6 space-y-6">
+                  <div className="flex justify-between items-center border-b border-[var(--ink)] border-opacity-10 pb-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--pie-green)]">Playground Sandbox Run</h4>
+                    <button onClick={() => setTestingActionId(null)} className="text-[var(--ink-soft)] hover:text-[var(--code-text)] transition">
+                      <X className="h-4.5 w-4.5" />
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Inputs panel */}
+                    {/* Inputs */}
                     <div className="space-y-4">
-                      <h5 className="text-xs font-black uppercase tracking-wider text-gray-400">Action Argument Inputs</h5>
+                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-soft)]">Action Arguments Input</h5>
                       {params.filter(p => p.name !== "_frame_selector").length > 0 ? (
                         <div className="space-y-3">
                           {params.filter(p => p.name !== "_frame_selector").map((p) => (
                             <div key={p.name}>
-                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{p.name}</label>
+                              <label className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-1">{p.name}</label>
                               <input
                                 type="text"
                                 value={testParams[p.name] || ''}
                                 onChange={(e) => handleParamChange(p.name, e.target.value)}
-                                className="w-full bg-gray-800 border border-gray-700 p-2 font-bold text-white text-sm focus:outline-none focus:border-pink-500"
+                                className="w-full bg-[var(--code-bg)] border border-[var(--ink-soft)] border-opacity-20 rounded-full px-4 py-2 text-xs font-semibold text-[var(--code-text)] focus:outline-none focus:border-[var(--pie-green)]"
                               />
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-gray-500 italic">No parameter inputs needed for this action.</p>
+                        <p className="text-xs text-[var(--ink-soft)] italic">No input parameters required for this action.</p>
                       )}
 
                       <button
                         onClick={() => runPlayground(act.id)}
                         disabled={runningPlayground}
-                        className="w-full bg-pink-500 hover:bg-pink-600 text-white border-2 border-black font-black py-3 flex items-center justify-center gap-2 uppercase text-sm tracking-wider shadow-[3px_3px_0px_0px_rgba(255,255,255,0.9)]"
+                        className="w-full bg-[var(--ink)] hover:bg-[var(--pie-green)] hover:text-[var(--ink)] text-[var(--cream)] border border-[var(--line)] font-bold py-3.5 rounded-full flex items-center justify-center gap-2 uppercase text-xs tracking-wider transition-all duration-150"
                       >
                         {runningPlayground ? (
                           <>
-                            <Loader className="h-4 w-4 animate-spin" />
-                            Executing Sandbox context...
+                            <Loader className="h-4 w-4 animate-spin text-[var(--pie-green)]" />
+                            <span>Executing Sandbox Pipeline...</span>
                           </>
                         ) : (
                           <>
-                            <Play className="h-4 w-4" />
-                            Run Sandbox Execution
+                            <Play className="h-3.5 w-3.5 fill-current" />
+                            <span>Run Sandbox Test</span>
                           </>
                         )}
                       </button>
                     </div>
 
-                    {/* Results panel */}
-                    <div className="bg-gray-950 border border-gray-800 p-4 flex flex-col justify-center min-h-[250px]">
+                    {/* Results */}
+                    <div className="bg-[var(--code-bg)] border border-[var(--ink-soft)] border-opacity-10 rounded-[16px] p-4 flex flex-col justify-center min-h-[250px]">
                       {runningPlayground && (
                         <div className="text-center space-y-3">
-                          <Loader className="h-8 w-8 text-pink-400 animate-spin mx-auto" />
-                          <p className="text-xs font-bold text-gray-400 uppercase">Spawning Playwright session...</p>
+                          <Loader className="h-8 w-8 text-[var(--pie-green)] animate-spin mx-auto" />
+                          <p className="text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider">Spawning browser context...</p>
                         </div>
                       )}
 
                       {!runningPlayground && !playgroundResult && (
-                        <p className="text-sm text-gray-500 italic text-center">Awaiting execution run...</p>
+                        <p className="text-xs text-[var(--ink-soft)] italic text-center">Awaiting execution run...</p>
                       )}
 
                       {!runningPlayground && playgroundResult && (
                         <div className="space-y-4">
-                          <div className="flex justify-between items-center border-b border-gray-800 pb-2">
-                            <span className="text-xs font-bold text-gray-400 uppercase">Sandbox Results</span>
+                          <div className="flex justify-between items-center border-b border-[var(--ink)] border-opacity-10 pb-2">
+                            <span className="text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider">Results</span>
                             <div className="flex items-center gap-2">
                               {playgroundResult.success ? (
-                                <span className="bg-green-900/30 text-green-400 border border-green-800 text-[10px] font-black px-2 py-0.5 uppercase tracking-wide flex items-center gap-1">
+                                <span className="bg-green-950/30 text-green-400 border border-green-900/40 text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
                                   <CheckCircle className="h-3 w-3" /> SUCCESS
                                 </span>
                               ) : (
-                                <span className="bg-red-900/30 text-red-400 border border-red-800 text-[10px] font-black px-2 py-0.5 uppercase tracking-wide flex items-center gap-1">
+                                <span className="bg-red-950/30 text-red-400 border border-red-900/40 text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
                                   <ShieldAlert className="h-3 w-3" /> FAILED
                                 </span>
                               )}
-                              <span className="text-gray-500 text-xs font-bold">{(playgroundResult.execution_time_ms / 1000).toFixed(2)}s</span>
+                              <span className="text-[var(--ink-soft)] text-xs font-mono">{(playgroundResult.execution_time_ms / 1000).toFixed(2)}s</span>
                             </div>
                           </div>
 
                           {playgroundResult.error && (
-                            <div className="bg-red-950/40 border border-red-900 p-3 text-xs text-red-300 font-mono">
+                            <div className="bg-red-950/40 border border-red-900/40 p-3 rounded-[12px] text-xs text-red-300 font-mono leading-relaxed">
                               {playgroundResult.error}
                             </div>
                           )}
 
                           {playgroundResult.assertion_results?.length > 0 && (
                             <div className="space-y-1.5">
-                              <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Assertions Checked</span>
+                              <span className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider">Assertions Evaluation</span>
                               {playgroundResult.assertion_results.map((ast: any, idx: number) => (
-                                <div key={idx} className={`text-xs p-2 border flex justify-between ${ast.passed ? 'bg-green-950/30 border-green-950 text-green-400' : 'bg-red-950/30 border-red-950 text-red-400'}`}>
+                                <div key={idx} className={`text-xs p-2.5 rounded-[12px] border flex justify-between ${ast.passed ? 'bg-green-950/20 border-green-950/50 text-green-400' : 'bg-red-950/20 border-red-950/50 text-red-400'}`}>
                                   <div>
-                                    <span className="font-bold uppercase mr-1">{ast.type}</span>
-                                    {ast.selector && <span className="font-mono text-[10px] opacity-70">[{ast.selector}]</span>}
+                                    <span className="font-bold uppercase mr-1.5">{ast.type}</span>
+                                    {ast.selector && <span className="font-mono text-[10px] opacity-60">[{ast.selector}]</span>}
                                   </div>
-                                  <span className="font-black">{ast.passed ? 'PASSED' : 'FAILED'}</span>
+                                  <span className="font-bold text-[10px]">{ast.passed ? 'PASSED' : 'FAILED'}</span>
                                 </div>
                               ))}
                             </div>
                           )}
 
                           {playgroundResult.screenshot && (
-                            <div className="border border-gray-800 p-1 bg-gray-900 mt-2">
-                              <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sandbox Live Feed screenshot</span>
+                            <div className="border border-[var(--ink-soft)] border-opacity-10 p-1 bg-[var(--code-bg)] rounded-[12px] mt-2">
+                              <span className="block text-[9px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-1.5">Page Layout Screenshot</span>
                               <img
                                 src={`data:image/png;base64,${playgroundResult.screenshot}`}
                                 alt="Sandbox Screenshot"
-                                className="w-full max-h-64 object-contain border border-black bg-white"
+                                className="w-full max-h-64 object-contain border border-[var(--ink-soft)] border-opacity-10 bg-white rounded-[8px]"
                               />
                             </div>
                           )}
@@ -420,22 +420,22 @@ export function WorkflowTable({ projectId, actions, onActionsUpdated }: Workflow
                 </div>
               )}
 
+              {/* READ-ONLY DETAILS AREA */}
               {!isEditing && !isTesting && (
-                // VIEW MODE DETAILS
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <div className="text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">Anchor Selector</div>
-                    <code className="block bg-gray-50 p-2 border-2 border-black rounded-none font-mono text-sm font-bold">{act.selector}</code>
+                    <div className="text-[10px] font-bold text-[var(--ink-soft)] mb-2 uppercase tracking-wider">Anchor Selector</div>
+                    <code className="block bg-[var(--cream)] p-2.5 border border-[var(--line)] rounded-[12px] font-mono text-xs text-[var(--ink)] font-semibold break-all">{act.selector}</code>
                     
                     {currentAssertions.length > 0 && (
                       <div className="mt-4">
-                        <div className="text-xs font-black text-gray-500 mb-2 uppercase tracking-widest text-pink-500">Active Test Assertions</div>
+                        <div className="text-[10px] font-bold text-[var(--ink-soft)] mb-2 uppercase tracking-wider">Active Assertions</div>
                         <div className="space-y-1">
                           {currentAssertions.map((a, idx) => (
-                            <div key={idx} className="text-xs bg-pink-50 border border-pink-200 p-2 font-medium">
-                              <span className="font-bold text-pink-700 uppercase mr-1">{a.type}</span>
-                              {a.selector && <span className="text-gray-600 font-mono">[{a.selector}]</span>}
-                              {a.value && <span className="text-black font-semibold ml-1">→ "{a.value}"</span>}
+                            <div key={idx} className="text-xs bg-[var(--cream)] border border-[var(--line)] p-2.5 rounded-[12px] font-semibold text-[var(--ink)] flex flex-wrap gap-1 items-center">
+                              <span className="text-[var(--pie-green-deep)] uppercase font-bold mr-1">{a.type}</span>
+                              {a.selector && <span className="text-[var(--ink-soft)] font-mono">[{a.selector}]</span>}
+                              {a.value && <span className="text-[var(--ink)] font-extrabold">→ "{a.value}"</span>}
                             </div>
                           ))}
                         </div>
@@ -443,19 +443,19 @@ export function WorkflowTable({ projectId, actions, onActionsUpdated }: Workflow
                     )}
                   </div>
                   <div>
-                    <div className="text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">Required Params</div>
+                    <div className="text-[10px] font-bold text-[var(--ink-soft)] mb-2 uppercase tracking-wider">Required Arguments</div>
                     {params.length > 0 ? (
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         {params.map((p, idx) => (
-                          <div key={idx} className="text-sm font-medium flex items-center gap-2 bg-gray-50 p-2 border-2 border-black">
-                            <strong className="text-black">{p.name}</strong>
-                            <span className="text-gray-500 text-xs uppercase">({p.type})</span>
-                            {p.selector && <code className="ml-auto text-xs bg-white px-2 py-1 border border-black font-mono">{p.selector}</code>}
+                          <div key={idx} className="text-xs font-semibold flex items-center gap-2 bg-[var(--cream)] p-2.5 border border-[var(--line)] rounded-[12px] text-[var(--ink)]">
+                            <span className="font-extrabold">{p.name}</span>
+                            <span className="text-[var(--ink-soft)] text-[10px] uppercase font-bold">({p.type})</span>
+                            {p.selector && <code className="ml-auto text-[10px] bg-[var(--paper)] px-2.5 py-0.5 rounded-full border border-[var(--line)] font-mono text-[var(--ink-soft)]">{p.selector}</code>}
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <span className="block bg-gray-50 p-2 border-2 border-black font-medium text-sm text-gray-500 italic">No parameters required</span>
+                      <span className="block bg-[var(--cream)] p-2.5 border border-[var(--line)] rounded-[12px] text-xs text-[var(--ink-soft)] italic">No parameters required for this action.</span>
                     )}
                   </div>
                 </div>

@@ -17,31 +17,31 @@ export function ApiMap({ apis }: ApiMapProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
-          <Database className="h-8 w-8" />
-          API MAPPER
+        <h2 className="display-title text-2xl flex items-center gap-3 text-[var(--ink)]">
+          <Database className="h-7 w-7 text-[var(--pie-green-deep)]" />
+          <span>Discovered API Maps</span>
         </h2>
-        <p className="text-gray-600 font-medium mt-2">Browser intent to direct background API translations.</p>
+        <p className="text-[var(--ink-soft)] text-xs font-semibold mt-1">Browser intent to direct background API request translations.</p>
       </div>
 
       <div className="space-y-6">
         {apis.map((api) => (
-          <div key={api.id} className="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-md p-6 flex flex-col md:flex-row justify-between gap-6">
+          <div key={api.id} className="bg-[var(--paper)] border border-[var(--line)] rounded-[24px] p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm hover:border-[var(--pie-green)] transition duration-200">
             <div>
               <div className="flex items-center gap-4 mb-4">
-                <span className="bg-black text-white font-black px-3 py-1.5 text-sm uppercase tracking-wider shadow-[2px_2px_0px_0px_#f472b6] border border-black">
+                <span className="bg-[var(--ink)] text-[var(--cream)] font-bold px-3.5 py-1 text-xs uppercase tracking-wider rounded-full">
                   {api.method}
                 </span>
-                <code className="text-lg font-bold font-mono">{api.url}</code>
+                <code className="text-sm font-bold font-mono text-[var(--ink)]">{api.url}</code>
               </div>
-              <div className="text-sm font-medium text-gray-600 bg-pink-50 border border-black p-3 inline-block">
-                Resolved Intent: <strong className="text-black uppercase">{api.mapped_action}</strong>
+              <div className="text-xs font-semibold text-[var(--ink-soft)] bg-[var(--cream)] border border-[var(--line)] px-4 py-2.5 rounded-full inline-block">
+                Resolved Action: <strong className="text-[var(--ink)] uppercase font-extrabold">{api.mapped_action}</strong>
               </div>
             </div>
 
             <div className="md:w-1/2">
-              <div className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Expected Payload</div>
-              <pre className="bg-gray-50 p-4 border-2 border-black font-mono text-sm font-bold text-black overflow-x-auto">
+              <div className="text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-2">Expected Payload Schema</div>
+              <pre className="bg-[var(--code-bg)] text-[var(--code-text)] p-4 rounded-[16px] border border-[var(--line)] font-mono text-xs overflow-x-auto shadow-inner">
                 {JSON.stringify(api.request_body, null, 2)}
               </pre>
             </div>

@@ -3,39 +3,101 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  /* Clean white journal paper */
-  --foreground: #000000;
-  /* Stark black ink */
+  /* Font Families */
+  --font-sans: var(--font-archivo), "Inter Tight", "Archivo", system-ui, -apple-system, sans-serif;
+  --font-code: var(--font-mono), "JetBrains Mono", "SF Mono", monospace;
+
+  /* HTTPie Flow Design System Tokens - Light Mode */
+  --cream: #F5F5F0;
+  --ink: #16171A;
+  --ink-soft: #46474C;
+  --pie-green: #3DD56D;
+  --pie-green-deep: #1F9E4D;
+  --paper: #FFFFFF;
+  --line: #E4E3DC;
+  --code-bg: #101113;
+  --code-text: #E9E9E4;
+}
+
+[data-theme="dark"] {
+  /* HTTPie Flow Design System Tokens - Dark Mode */
+  --cream: #121316;
+  --ink: #F5F5F0;
+  --ink-soft: #A2A4A8;
+  --pie-green: #3DD56D;
+  --pie-green-deep: #5CE588;
+  --paper: #1A1C1F;
+  --line: #292A2E;
+  --code-bg: #0A0B0C;
+  --code-text: #E9E9E4;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  color: var(--foreground);
-  background-color: var(--background);
-  /* Optional: faint dot pattern for a journal feel */
-  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
-  background-size: 20px 20px;
+  color: var(--ink);
+  background-color: var(--cream);
+  font-family: var(--font-sans);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Custom sharp scrollbars */
+/* Custom sharp scrollbars matching the brand colors */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-left: 2px solid #000;
+  background: var(--cream);
+  border-left: 1px solid var(--line);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #000;
-  border: 2px solid #000;
+  background: var(--ink);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #f472b6;
-  /* pink-400 */
+  background: var(--pie-green);
+}
+
+/* Typography styles */
+.display-title {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+}
+
+.mono-text {
+  font-family: var(--font-code);
+}
+
+/* CSS Utilities for HTTPie Flow UI shapes */
+.pie-shape {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Float animations */
+@keyframes floatParallax {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-float {
+  animation: floatParallax 12s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatParallax 20s ease-in-out infinite;
 }
